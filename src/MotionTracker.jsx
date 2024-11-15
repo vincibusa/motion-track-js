@@ -83,7 +83,7 @@ const MotionTracker = () => {
       }
     };
 
-    console.log('Creazione dell\'istanza di Pose');
+    console.log('Creazione dell\'istanza di Pose,b');
     const pose = new Pose({
       locateFile: (file) => {
         console.log(`Richiesta del file: ${file}`);
