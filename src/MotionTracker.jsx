@@ -22,7 +22,7 @@ const MotionTracker = () => {
 
     // Regola l'angolo per la posizione verso il basso
     if (wrist[1] > shoulder[1]) {
-      angleDegrees = 180 - angleDegrees;  // Quando l'arm è giù
+      angleDegrees = 180 - angleDegrees; // Quando l'arm è giù
     }
 
     return angleDegrees;
@@ -99,7 +99,7 @@ const MotionTracker = () => {
     landmarks.forEach((landmark, index) => {
       // Exclude face landmarks (indices 0-10)
       if (index < 11) return;
-  
+
       ctx.beginPath();
       ctx.arc(landmark.x * canvasRef.current.width, landmark.y * canvasRef.current.height, 5, 0, 2 * Math.PI);
       ctx.fill();
