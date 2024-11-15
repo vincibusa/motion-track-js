@@ -1,11 +1,8 @@
-/* eslint-disable no-unused-vars */
-
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import * as MediapipePose from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
 import '@mediapipe/pose/pose';
 
-// Define necessary landmark indices
 const POSE_LANDMARKS = {
   NOSE: 0,
   LEFT_SHOULDER: 11,
@@ -22,21 +19,15 @@ const POSE_LANDMARKS = {
   RIGHT_ANKLE: 28,
 };
 
-// Define skeleton connections
 const POSE_CONNECTIONS = [
-  // Arms
   [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_ELBOW],
   [POSE_LANDMARKS.LEFT_ELBOW, POSE_LANDMARKS.LEFT_WRIST],
   [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_ELBOW],
   [POSE_LANDMARKS.RIGHT_ELBOW, POSE_LANDMARKS.RIGHT_WRIST],
-
-  // Torso
   [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.RIGHT_SHOULDER],
   [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_HIP],
   [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_HIP],
   [POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.RIGHT_HIP],
-
-  // Legs
   [POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_KNEE],
   [POSE_LANDMARKS.LEFT_KNEE, POSE_LANDMARKS.LEFT_ANKLE],
   [POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_KNEE],
@@ -46,11 +37,12 @@ const POSE_CONNECTIONS = [
 const MotionTracker = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const containerRef = useRef(null);
   const [angle, setAngle] = useState(0);
   const [timer, setTimer] = useState(10);
   const poseRef = useRef(null);
+  const [useFallback, setUseFallback] = useState(false);
 
-  // Function to calculate shoulder flexion angle
   const calculateRightShoulderFlexion = (hip, shoulder, wrist) => {
     const hipToShoulder = [shoulder[0] - hip[0], shoulder[1] - hip[1]];
     const shoulderToWrist = [wrist[0] - shoulder[0], wrist[1] - shoulder[1]];
@@ -77,8 +69,7 @@ const MotionTracker = () => {
     return angleDegrees;
   };
 
-  // Function to draw custom skeleton
-  const drawSkeleton = (landmarks, ctx) => {
+  const drawSkeleton = (landmarks, ctx, width, height) => {
     ctx.strokeStyle = 'blue';
     ctx.lineWidth = 2;
 
@@ -88,24 +79,27 @@ const MotionTracker = () => {
 
       if (start && end) {
         ctx.beginPath();
-        ctx.moveTo(
-          start.x * canvasRef.current.width,
-          start.y * canvasRef.current.height
-        );
-        ctx.lineTo(
-          end.x * canvasRef.current.width,
-          end.y * canvasRef.current.height
-        );
+        ctx.moveTo(start.x * width, start.y * height);
+        ctx.lineTo(end.x * width, end.y * height);
         ctx.stroke();
       }
     });
   };
 
-  // Define the onResults function using useCallback
   const onResults = useCallback((results) => {
     const canvas = canvasRef.current;
+    if (!canvas) {
+      console.warn('Canvas not available');
+      return;
+    }
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!ctx) {
+      console.warn('Canvas context not available');
+      return;
+    }
+
+    const { width, height } = canvas;
+    ctx.clearRect(0, 0, width, height);
 
     if (results.poseLandmarks) {
       const landmarks = results.poseLandmarks;
@@ -121,16 +115,16 @@ const MotionTracker = () => {
 
       if (allLandmarksExist) {
         const rightHip = [
-          landmarks[POSE_LANDMARKS.RIGHT_HIP].x * canvas.width,
-          landmarks[POSE_LANDMARKS.RIGHT_HIP].y * canvas.height,
+          landmarks[POSE_LANDMARKS.RIGHT_HIP].x * width,
+          landmarks[POSE_LANDMARKS.RIGHT_HIP].y * height,
         ];
         const rightShoulder = [
-          landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].x * canvas.width,
-          landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].y * canvas.height,
+          landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].x * width,
+          landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].y * height,
         ];
         const rightWrist = [
-          landmarks[POSE_LANDMARKS.RIGHT_WRIST].x * canvas.width,
-          landmarks[POSE_LANDMARKS.RIGHT_WRIST].y * canvas.height,
+          landmarks[POSE_LANDMARKS.RIGHT_WRIST].x * width,
+          landmarks[POSE_LANDMARKS.RIGHT_WRIST].y * height,
         ];
 
         const newAngle = calculateRightShoulderFlexion(
@@ -140,14 +134,12 @@ const MotionTracker = () => {
         );
         setAngle(newAngle);
 
-        // Draw custom skeleton
-        drawSkeleton(landmarks, ctx);
+        drawSkeleton(landmarks, ctx, width, height);
 
-        // Optionally draw body landmarks
         landmarks.forEach((landmark, idx) => {
-          if (idx >= 11 && idx <= 32) { // Only body landmarks
-            const x = landmark.x * canvas.width;
-            const y = landmark.y * canvas.height;
+          if (idx >= 11 && idx <= 32) {
+            const x = landmark.x * width;
+            const y = landmark.y * height;
             ctx.fillStyle = '#FF0000';
             ctx.beginPath();
             ctx.arc(x, y, 2, 0, 2 * Math.PI);
@@ -162,22 +154,38 @@ const MotionTracker = () => {
     }
   }, []);
 
-  // Setup MediaPipe Pose
   const setupPose = useCallback(async () => {
     try {
       const video = videoRef.current;
       const canvas = canvasRef.current;
 
-      // Create an instance of Pose with correctly replaced file names
+      if (!video) {
+        console.error('Video element not found');
+        return;
+      }
+
+      if (!canvas) {
+        console.error('Canvas element not found');
+        return;
+      }
+
+      if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
+      ) {
+        console.error('getUserMedia is not supported in this browser.');
+        setUseFallback(true);
+        return;
+      }
+
       const pose = new MediapipePose.Pose({
         locateFile: (file) => {
-          // Replace 'simd_wasm_bin.js' with 'wasm_bin.js' correctly
           if (file === 'pose_solution_simd_wasm_bin.js') {
             return 'https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose_solution_wasm_bin.js';
           }
           return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
         },
-        useCpuInference: true, // Ensure CPU inference is used
+        useCpuInference: true,
       });
 
       pose.setOptions({
@@ -191,7 +199,6 @@ const MotionTracker = () => {
       pose.onResults(onResults);
       poseRef.current = pose;
 
-      // Manage webcam access
       const camera = new Camera(video, {
         onFrame: async () => {
           try {
@@ -209,17 +216,6 @@ const MotionTracker = () => {
     }
   }, [onResults]);
 
-  // Handle timer
-  useEffect(() => {
-    if (timer > 0) {
-      const interval = setInterval(() => {
-        setTimer((prevTime) => prevTime - 1);
-      }, 1000);
-
-      return () => clearInterval(interval);
-    }
-  }, [timer]);
-
   useEffect(() => {
     setupPose();
     return () => {
@@ -229,39 +225,84 @@ const MotionTracker = () => {
     };
   }, [setupPose]);
 
+  const fallbackVideo = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.src = '/fallback-video.mp4';
+    video.play().catch((err) => {
+      console.error('Error playing fallback video:', err);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (useFallback) {
+      fallbackVideo();
+    }
+  }, [useFallback, fallbackVideo]);
+
+  // Handle responsive resizing
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current && canvasRef.current && videoRef.current) {
+        const { clientWidth, clientHeight } = containerRef.current;
+        canvasRef.current.width = clientWidth;
+        canvasRef.current.height = clientHeight;
+        videoRef.current.width = clientWidth;
+        videoRef.current.height = clientHeight;
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
-    <div style={{ position: 'relative', width: '1280px', height: '720px' }}>
+    <div
+      ref={containerRef}
+      style={{
+        position: 'relative',
+        width: '100%',
+        maxWidth: '1280px',
+        margin: '0 auto',
+        aspectRatio: '16 / 9',
+      }}
+    >
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
-        width="1280"
-        height="720"
         style={{
           position: 'absolute',
-          zIndex: 1,
-          transform: 'scaleX(-1)', // Mirror the video for natural viewing
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          transform: 'scaleX(-1)',
         }}
       />
       <canvas
         ref={canvasRef}
-        width="1280"
-        height="720"
         style={{
           position: 'absolute',
-          zIndex: 2,
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
           transform: 'scaleX(-1)',
         }}
       />
       <div
         style={{
           position: 'absolute',
-          zIndex: 3,
-          top: '20px',
-          left: '20px',
+          top: '5%',
+          left: '5%',
           color: 'white',
-          fontSize: '24px',
+          fontSize: '1.5em',
+          textShadow: '0 0 5px rgba(0,0,0,0.5)',
         }}
       >
         Time: {timer}s
@@ -269,15 +310,31 @@ const MotionTracker = () => {
       <div
         style={{
           position: 'absolute',
-          zIndex: 3,
-          top: '50px',
-          left: '20px',
+          top: '10%',
+          left: '5%',
           color: 'white',
-          fontSize: '24px',
+          fontSize: '1.5em',
+          textShadow: '0 0 5px rgba(0,0,0,0.5)',
         }}
       >
         Right Shoulder: {Math.round(angle)}°
       </div>
+      {useFallback && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '5%',
+            left: '5%',
+            color: 'yellow',
+            fontSize: '1em',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            padding: '10px',
+            borderRadius: '5px',
+          }}
+        >
+          Webcam not supported. Using fallback video.
+        </div>
+      )}
     </div>
   );
 };
