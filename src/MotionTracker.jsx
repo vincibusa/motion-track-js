@@ -1,6 +1,6 @@
-import React, { useRef, useState, useEffect } from 'react';
-import * as mpPose from '@mediapipe/pose';
-import '@mediapipe/pose/pose'; // Carica lo script di MediaPipe
+import { useRef, useState, useEffect } from 'react';
+import { Pose, POSE_LANDMARKS } from '@mediapipe/pose';
+import '@mediapipe/pose/pose'; // Mantieni questa importazione
 
 const MotionTracker = () => {
   const videoRef = useRef(null);
@@ -12,60 +12,61 @@ const MotionTracker = () => {
   const calculateRightShoulderFlexion = (hip, shoulder, wrist) => {
     const hipToShoulder = [shoulder[0] - hip[0], shoulder[1] - hip[1]];
     const shoulderToWrist = [wrist[0] - shoulder[0], wrist[1] - shoulder[1]];
-  
+
     const dotProduct = hipToShoulder[0] * shoulderToWrist[0] + hipToShoulder[1] * shoulderToWrist[1];
     const magnitudeHipToShoulder = Math.sqrt(hipToShoulder[0] ** 2 + hipToShoulder[1] ** 2);
     const magnitudeShoulderToWrist = Math.sqrt(shoulderToWrist[0] ** 2 + shoulderToWrist[1] ** 2);
-  
+
     const cosAngle = dotProduct / (magnitudeHipToShoulder * magnitudeShoulderToWrist);
     let angleDegrees = Math.acos(Math.min(Math.max(cosAngle, -1), 1)) * (180 / Math.PI);
-  
+
     // Mappa l'angolo correttamente
     if (wrist[1] > shoulder[1]) {
       angleDegrees = 180 - angleDegrees; // Braccio giù
     }
-  
+
     return angleDegrees;
   };
+
   // Configura MediaPipe Pose
   const setupPose = async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-  
+
     const onResults = (results) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
+
       if (results.poseLandmarks) {
         const landmarks = results.poseLandmarks;
-  
+
         // Verifica che i landmarks esistano
         const requiredLandmarks = [
-          mpPose.POSE_LANDMARKS.RIGHT_HIP,
-          mpPose.POSE_LANDMARKS.RIGHT_SHOULDER,
-          mpPose.POSE_LANDMARKS.RIGHT_WRIST
+          POSE_LANDMARKS.RIGHT_HIP,
+          POSE_LANDMARKS.RIGHT_SHOULDER,
+          POSE_LANDMARKS.RIGHT_WRIST
         ];
-  
+
         const allLandmarksExist = requiredLandmarks.every(idx => landmarks[idx]);
-  
+
         if (allLandmarksExist) {
           const rightHip = [
-            landmarks[mpPose.POSE_LANDMARKS.RIGHT_HIP].x * canvas.width,
-            landmarks[mpPose.POSE_LANDMARKS.RIGHT_HIP].y * canvas.height
+            landmarks[POSE_LANDMARKS.RIGHT_HIP].x * canvas.width,
+            landmarks[POSE_LANDMARKS.RIGHT_HIP].y * canvas.height
           ];
           const rightShoulder = [
-            landmarks[mpPose.POSE_LANDMARKS.RIGHT_SHOULDER].x * canvas.width,
-            landmarks[mpPose.POSE_LANDMARKS.RIGHT_SHOULDER].y * canvas.height
+            landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].x * canvas.width,
+            landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].y * canvas.height
           ];
           const rightWrist = [
-            landmarks[mpPose.POSE_LANDMARKS.RIGHT_WRIST].x * canvas.width,
-            landmarks[mpPose.POSE_LANDMARKS.RIGHT_WRIST].y * canvas.height
+            landmarks[POSE_LANDMARKS.RIGHT_WRIST].x * canvas.width,
+            landmarks[POSE_LANDMARKS.RIGHT_WRIST].y * canvas.height
           ];
-  
+
           // Calcola l'angolo
           const newAngle = calculateRightShoulderFlexion(rightHip, rightShoulder, rightWrist);
           setAngle(newAngle);
-  
+
           // Disegna i landmarks e lo scheletro
           drawLandmarks(landmarks, ctx);
           drawSkeleton(landmarks, ctx);
@@ -74,9 +75,9 @@ const MotionTracker = () => {
         }
       }
     };
-  
-    const pose = new mpPose.Pose({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+
+    const pose = new Pose({
+      locateFile: (file) => `/mediapipe/${file}`, // Percorso locale
     });
     pose.setOptions({
       modelComplexity: 2,
@@ -84,15 +85,15 @@ const MotionTracker = () => {
       minDetectionConfidence: 0.6,
       minTrackingConfidence: 0.6,
     });
-  
+
     pose.onResults(onResults);
-  
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480 },
       });
       video.srcObject = stream;
-  
+
       video.onloadeddata = async () => {
         const cameraLoop = async () => {
           await pose.send({ image: video });
@@ -108,7 +109,7 @@ const MotionTracker = () => {
   const drawLandmarks = (landmarks, ctx) => {
     ctx.fillStyle = 'red';
     landmarks.forEach((landmark, index) => {
-      // Exclude face landmarks (indices 0-10)
+      // Escludi i landmarks del viso (indici 0-10)
       if (index < 11) return;
 
       ctx.beginPath();
@@ -163,7 +164,7 @@ const MotionTracker = () => {
         muted
         width="640"
         height="480"
-               style={{
+        style={{
           position: 'absolute',
           zIndex: 1,
           transform: 'scaleX(-1)', // Specchia il video per una visualizzazione naturale
@@ -173,10 +174,11 @@ const MotionTracker = () => {
         ref={canvasRef}
         width="640"
         height="480"
-               style={{
+        style={{
           position: 'absolute',
           zIndex: 2,
-          transform: 'scaleX(-1)', // Specchia il canvas in modo che corrisponda al video
+    
+        transform: 'scaleX(-1)', 
         }}
       />
       <div style={{ position: 'absolute', zIndex: 3, top: '20px', left: '20px', color: 'white', fontSize: '24px' }}>
