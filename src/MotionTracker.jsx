@@ -76,8 +76,21 @@ const MotionTracker = () => {
       }
     };
 
-    const pose = new Pose({
-      locateFile: (file) => `/mediapipe/${file}`, // Percorso locale
+      const pose = new Pose({
+      locateFile: (file) => {
+        switch (file) {
+          case 'pose_solution_packed_assets_loader.js':
+            return `/mediapipe/pose_solution_packed_assets_loader.js`;
+          case 'pose_solution_simd_wasm_bin.js':
+            return `/mediapipe/pose_solution_simd_wasm_bin.js`;
+          case 'pose_solution_wasm_bin.wasm':
+            return `/mediapipe/pose_solution_wasm_bin.wasm`;
+          case 'pose_solution_simd_wasm_bin.wasm':
+            return `/mediapipe/pose_solution_simd_wasm_bin.wasm`;
+          default:
+            return `/mediapipe/${file}`;
+        }
+      },
     });
     pose.setOptions({
       modelComplexity: 2,
