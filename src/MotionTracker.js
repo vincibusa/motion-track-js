@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect , useCallback} from 'react';
 import * as MediapipePose from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
 import '@mediapipe/pose/pose';
@@ -103,7 +103,7 @@ const MotionTracker = () => {
 
   // Configura MediaPipe Pose
 // Update Pose initialization to load non-SIMD WASM binaries
-const setupPose = async () => {
+const setupPose = useCallback(async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -141,7 +141,7 @@ const setupPose = async () => {
       height: 720,
     });
     camera.start();
-  };
+  }, []);  // Aggiungi dipendenze se necessario
 
   const onResults = (results) => {
     const canvas = canvasRef.current;
