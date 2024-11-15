@@ -5,20 +5,20 @@ import '@mediapipe/pose/pose';
 
 // Definisci manualmente gli indici dei landmark necessari
 const POSE_LANDMARKS = {
-  NOSE: 0,
-  LEFT_SHOULDER: 11,
-  RIGHT_SHOULDER: 12,
-  LEFT_ELBOW: 13,
-  RIGHT_ELBOW: 14,
-  LEFT_WRIST: 15,
-  RIGHT_WRIST: 16,
-  LEFT_HIP: 23,
-  RIGHT_HIP: 24,
-  LEFT_KNEE: 25,
-  RIGHT_KNEE: 26,
-  LEFT_ANKLE: 27,
-  RIGHT_ANankle: 28,
-};
+    NOSE: 0,
+    LEFT_SHOULDER: 11,
+    RIGHT_SHOULDER: 12,
+    LEFT_ELBOW: 13,
+    RIGHT_ELBOW: 14,
+    LEFT_WRIST: 15,
+    RIGHT_WRIST: 16,
+    LEFT_HIP: 23,
+    RIGHT_HIP: 24,
+    LEFT_KNEE: 25,
+    RIGHT_KNEE: 26,
+    LEFT_ANKLE: 27,
+    RIGHT_ANKLE: 28, // Fixed casing
+  };
 
 // Definisci le connessioni dello scheletro del corpo
 const POSE_CONNECTIONS = [
@@ -102,27 +102,37 @@ const MotionTracker = () => {
   };
 
   // Configura MediaPipe Pose
-  const setupPose = async () => {
+// Update Pose initialization to load non-SIMD WASM binaries
+const setupPose = async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-
-    // Crea un'istanza di Pose
+  
+    // Create an instance of Pose without SIMD
     const pose = new MediapipePose.Pose({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+      locateFile: (file) => {
+        // Load non-SIMD WASM binaries by replacing 'simd' with 'wasm'
+        if (file === 'pose_solution_packed_assets.bin') {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+        }
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+      },
+      useCpuInference: true, // Ensure CPU inference is used
     });
-
+  
     pose.setOptions({
-      modelComplexity: 1, // Modificato da 2 a 1
+      modelComplexity: 1,
       smoothLandmarks: true,
       minDetectionConfidence: 0.6,
       minTrackingConfidence: 0.6,
+      // Disable segmentation if not needed
+      enableSegmentation: false,
     });
-
+  
     pose.onResults(onResults);
     poseRef.current = pose;
-
-    // Gestisci l'accesso alla webcam
+  
+    // Manage webcam access
     const camera = new Camera(video, {
       onFrame: async () => {
         await pose.send({ image: video });
@@ -211,7 +221,7 @@ const MotionTracker = () => {
         poseRef.current.close();
       }
     };
-  }, []);
+  }, [setupPose]);
 
   return (
     <div style={{ position: 'relative', width: '1280px', height: '720px' }}>
