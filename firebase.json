@@ -4,11 +4,20 @@
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "headers": [
       {
-        "source": "**/*.wasm",
+        "source": "/mediapipe/*.wasm",
         "headers": [
           {
             "key": "Content-Type",
             "value": "application/wasm"
+          }
+        ]
+      },
+      {
+        "source": "/mediapipe/*.js",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/javascript"
           }
         ]
       }
