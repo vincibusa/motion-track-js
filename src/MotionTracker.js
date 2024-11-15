@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import * as MediapipePose from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
