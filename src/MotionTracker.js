@@ -31,8 +31,6 @@ const POSE_CONNECTIONS = [
   [POSE_LANDMARKS.RIGHT_ELBOW, POSE_LANDMARKS.RIGHT_WRIST],
 
   // Torso
-  [POSE_LANDMARKS.NOSE, POSE_LANDMARKS.LEFT_SHOULDER],
-  [POSE_LANDMARKS.NOSE, POSE_LANDMARKS.RIGHT_SHOULDER],
   [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.RIGHT_SHOULDER],
   [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_HIP],
   [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_HIP],
@@ -103,7 +101,7 @@ const MotionTracker = () => {
     });
   };
 
-  // Define the onResults function before using it
+  // Define the onResults function using useCallback
   const onResults = useCallback((results) => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -170,12 +168,12 @@ const MotionTracker = () => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
 
-      // Create an instance of Pose without SIMD
+      // Create an instance of Pose with correctly replaced file names
       const pose = new MediapipePose.Pose({
         locateFile: (file) => {
-          // Replace 'simd' with 'wasm' to load non-SIMD WASM binaries
-          if (file.includes('simd')) {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file.replace('simd', 'wasm')}`;
+          // Replace 'simd_wasm_bin.js' with 'wasm_bin.js' correctly
+          if (file === 'pose_solution_simd_wasm_bin.js') {
+            return 'https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose_solution_wasm_bin.js';
           }
           return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
         },
