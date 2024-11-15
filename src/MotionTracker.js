@@ -106,8 +106,10 @@ const MotionTracker = () => {
 const setupPose = useCallback(async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-  
+    const ctx = canvas.getContext('2d');  // `ctx` might be necessary for drawing
+
+    // Check if ctx is necessary in your code, if not, remove the assignment.
+
     // Create an instance of Pose without SIMD
     const pose = new MediapipePose.Pose({
       locateFile: (file) => {
@@ -129,7 +131,7 @@ const setupPose = useCallback(async () => {
       enableSegmentation: false,
     });
   
-    pose.onResults(onResults);
+    pose.onResults(onResults);  // Make sure the `onResults` is available in this scope
     poseRef.current = pose;
   
     // Manage webcam access
@@ -141,9 +143,69 @@ const setupPose = useCallback(async () => {
       height: 720,
     });
     camera.start();
-  }, []);  // Aggiungi dipendenze se necessario
+    // Define the onResults function inside the useCallback
+    const onResults = (results) => {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+      if (results.poseLandmarks) {
+        const landmarks = results.poseLandmarks;
+        const requiredLandmarks = [
+          POSE_LANDMARKS.RIGHT_HIP,
+          POSE_LANDMARKS.RIGHT_SHOULDER,
+          POSE_LANDMARKS.RIGHT_WRIST,
+        ];
+  
+        const allLandmarksExist = requiredLandmarks.every(
+          (idx) => landmarks[idx]
+        );
+  
+        if (allLandmarksExist) {
+          const rightHip = [
+            landmarks[POSE_LANDMARKS.RIGHT_HIP].x * canvas.width,
+            landmarks[POSE_LANDMARKS.RIGHT_HIP].y * canvas.height,
+          ];
+          const rightShoulder = [
+            landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].x * canvas.width,
+            landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].y * canvas.height,
+          ];
+          const rightWrist = [
+            landmarks[POSE_LANDMARKS.RIGHT_WRIST].x * canvas.width,
+            landmarks[POSE_LANDMARKS.RIGHT_WRIST].y * canvas.height,
+          ];
+  
+          const newAngle = calculateRightShoulderFlexion(
+            rightHip,
+            rightShoulder,
+            rightWrist
+          );
+          setAngle(newAngle);
+  
+          // Disegna lo scheletro personalizzato
+          drawSkeleton(landmarks, ctx);
+  
+          // Disegna i landmark del corpo (opzionale)
+          landmarks.forEach((landmark, idx) => {
+            if (idx >= 11 && idx <= 32) { // Solo i landmark del corpo
+              const x = landmark.x * canvas.width;
+              const y = landmark.y * canvas.height;
+              ctx.fillStyle = '#FF0000';
+              ctx.beginPath();
+              ctx.arc(x, y, 2, 0, 2 * Math.PI);
+              ctx.fill();
+            }
+          });
+        } else {
+          console.warn('Alcuni landmarks necessari sono mancanti.');
+        }
+      } else {
+        console.warn('Nessun landmark rilevato.');
+      }
+    };
 
-  const onResults = (results) => {
+    pose.onResults(onResults);  // Make sure the `onResults` is available in this scope
+  }, []); // Remove `onResults` from dependencies
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
