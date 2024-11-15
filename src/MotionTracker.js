@@ -1,4 +1,4 @@
-import React,{ useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import * as MediapipePose from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
 import '@mediapipe/pose/pose';
@@ -17,7 +17,7 @@ const POSE_LANDMARKS = {
   LEFT_KNEE: 25,
   RIGHT_KNEE: 26,
   LEFT_ANKLE: 27,
-  RIGHT_ANKLE: 28,
+  RIGHT_ANankle: 28,
 };
 
 // Definisci le connessioni dello scheletro del corpo
@@ -55,11 +55,18 @@ const MotionTracker = () => {
     const hipToShoulder = [shoulder[0] - hip[0], shoulder[1] - hip[1]];
     const shoulderToWrist = [wrist[0] - shoulder[0], wrist[1] - shoulder[1]];
 
-    const dotProduct = hipToShoulder[0] * shoulderToWrist[0] + hipToShoulder[1] * shoulderToWrist[1];
-    const magnitudeHipToShoulder = Math.sqrt(hipToShoulder[0] ** 2 + hipToShoulder[1] ** 2);
-    const magnitudeShoulderToWrist = Math.sqrt(shoulderToWrist[0] ** 2 + shoulderToWrist[1] ** 2);
+    const dotProduct =
+      hipToShoulder[0] * shoulderToWrist[0] +
+      hipToShoulder[1] * shoulderToWrist[1];
+    const magnitudeHipToShoulder = Math.sqrt(
+      hipToShoulder[0] ** 2 + hipToShoulder[1] ** 2
+    );
+    const magnitudeShoulderToWrist = Math.sqrt(
+      shoulderToWrist[0] ** 2 + shoulderToWrist[1] ** 2
+    );
 
-    const cosAngle = dotProduct / (magnitudeHipToShoulder * magnitudeShoulderToWrist);
+    const cosAngle =
+      dotProduct / (magnitudeHipToShoulder * magnitudeShoulderToWrist);
     let angleDegrees = Math.acos(Math.min(Math.max(cosAngle, -1), 1)) * (180 / Math.PI);
 
     if (wrist[1] > shoulder[1]) {
@@ -71,7 +78,7 @@ const MotionTracker = () => {
 
   // Funzione per disegnare lo scheletro personalizzato
   const drawSkeleton = (landmarks, ctx) => {
-    console.log('Disegno dello scheletro');
+  
     ctx.strokeStyle = 'blue';
     ctx.lineWidth = 2;
 
@@ -81,8 +88,14 @@ const MotionTracker = () => {
 
       if (start && end) {
         ctx.beginPath();
-        ctx.moveTo(start.x * canvasRef.current.width, start.y * canvasRef.current.height);
-        ctx.lineTo(end.x * canvasRef.current.width, end.y * canvasRef.current.height);
+        ctx.moveTo(
+          start.x * canvasRef.current.width,
+          start.y * canvasRef.current.height
+        );
+        ctx.lineTo(
+          end.x * canvasRef.current.width,
+          end.y * canvasRef.current.height
+        );
         ctx.stroke();
       }
     });
@@ -100,7 +113,7 @@ const MotionTracker = () => {
     });
 
     pose.setOptions({
-      modelComplexity: 2,
+      modelComplexity: 1, // Modificato da 2 a 1
       smoothLandmarks: true,
       minDetectionConfidence: 0.6,
       minTrackingConfidence: 0.6,
@@ -133,7 +146,9 @@ const MotionTracker = () => {
         POSE_LANDMARKS.RIGHT_WRIST,
       ];
 
-      const allLandmarksExist = requiredLandmarks.every((idx) => landmarks[idx]);
+      const allLandmarksExist = requiredLandmarks.every(
+        (idx) => landmarks[idx]
+      );
 
       if (allLandmarksExist) {
         const rightHip = [
@@ -149,7 +164,11 @@ const MotionTracker = () => {
           landmarks[POSE_LANDMARKS.RIGHT_WRIST].y * canvas.height,
         ];
 
-        const newAngle = calculateRightShoulderFlexion(rightHip, rightShoulder, rightWrist);
+        const newAngle = calculateRightShoulderFlexion(
+          rightHip,
+          rightShoulder,
+          rightWrist
+        );
         setAngle(newAngle);
 
         // Disegna lo scheletro personalizzato
