@@ -12,22 +12,21 @@ const MotionTracker = () => {
   const calculateRightShoulderFlexion = (hip, shoulder, wrist) => {
     const hipToShoulder = [shoulder[0] - hip[0], shoulder[1] - hip[1]];
     const shoulderToWrist = [wrist[0] - shoulder[0], wrist[1] - shoulder[1]];
-
+  
     const dotProduct = hipToShoulder[0] * shoulderToWrist[0] + hipToShoulder[1] * shoulderToWrist[1];
     const magnitudeHipToShoulder = Math.sqrt(hipToShoulder[0] ** 2 + hipToShoulder[1] ** 2);
     const magnitudeShoulderToWrist = Math.sqrt(shoulderToWrist[0] ** 2 + shoulderToWrist[1] ** 2);
-
+  
     const cosAngle = dotProduct / (magnitudeHipToShoulder * magnitudeShoulderToWrist);
     let angleDegrees = Math.acos(Math.min(Math.max(cosAngle, -1), 1)) * (180 / Math.PI);
-
-    // Regola l'angolo per la posizione verso il basso
+  
+    // Mappa l'angolo correttamente
     if (wrist[1] > shoulder[1]) {
-      angleDegrees = 180 - angleDegrees; // Quando l'arm è giù
+      angleDegrees = 180 - angleDegrees; // Braccio giù
     }
-
+  
     return angleDegrees;
   };
-
   // Configura MediaPipe Pose
   const setupPose = async () => {
     const video = videoRef.current;
@@ -40,27 +39,39 @@ const MotionTracker = () => {
       if (results.poseLandmarks) {
         const landmarks = results.poseLandmarks;
   
-        // Crea i punti di interesse
-        const rightHip = [
-          landmarks[mpPose.POSE_LANDMARKS.RIGHT_HIP].x * canvas.width,
-          landmarks[mpPose.POSE_LANDMARKS.RIGHT_HIP].y * canvas.height
-        ];
-        const rightShoulder = [
-          landmarks[mpPose.POSE_LANDMARKS.RIGHT_SHOULDER].x * canvas.width,
-          landmarks[mpPose.POSE_LANDMARKS.RIGHT_SHOULDER].y * canvas.height
-        ];
-        const rightWrist = [
-          landmarks[mpPose.POSE_LANDMARKS.RIGHT_WRIST].x * canvas.width,
-          landmarks[mpPose.POSE_LANDMARKS.RIGHT_WRIST].y * canvas.height
+        // Verifica che i landmarks esistano
+        const requiredLandmarks = [
+          mpPose.POSE_LANDMARKS.RIGHT_HIP,
+          mpPose.POSE_LANDMARKS.RIGHT_SHOULDER,
+          mpPose.POSE_LANDMARKS.RIGHT_WRIST
         ];
   
-        // Calcola l'angolo
-        const newAngle = calculateRightShoulderFlexion(rightHip, rightShoulder, rightWrist);
-        setAngle(newAngle);
+        const allLandmarksExist = requiredLandmarks.every(idx => landmarks[idx]);
   
-        // Disegna i landmarks e lo scheletro
-        drawLandmarks(landmarks, ctx);
-        drawSkeleton(landmarks, ctx);
+        if (allLandmarksExist) {
+          const rightHip = [
+            landmarks[mpPose.POSE_LANDMARKS.RIGHT_HIP].x * canvas.width,
+            landmarks[mpPose.POSE_LANDMARKS.RIGHT_HIP].y * canvas.height
+          ];
+          const rightShoulder = [
+            landmarks[mpPose.POSE_LANDMARKS.RIGHT_SHOULDER].x * canvas.width,
+            landmarks[mpPose.POSE_LANDMARKS.RIGHT_SHOULDER].y * canvas.height
+          ];
+          const rightWrist = [
+            landmarks[mpPose.POSE_LANDMARKS.RIGHT_WRIST].x * canvas.width,
+            landmarks[mpPose.POSE_LANDMARKS.RIGHT_WRIST].y * canvas.height
+          ];
+  
+          // Calcola l'angolo
+          const newAngle = calculateRightShoulderFlexion(rightHip, rightShoulder, rightWrist);
+          setAngle(newAngle);
+  
+          // Disegna i landmarks e lo scheletro
+          drawLandmarks(landmarks, ctx);
+          drawSkeleton(landmarks, ctx);
+        } else {
+          console.warn('Alcuni landmarks necessari sono mancanti.');
+        }
       }
     };
   
@@ -152,13 +163,21 @@ const MotionTracker = () => {
         muted
         width="640"
         height="480"
-        style={{ position: 'absolute', zIndex: 1 }}
+               style={{
+          position: 'absolute',
+          zIndex: 1,
+          transform: 'scaleX(-1)', // Specchia il video per una visualizzazione naturale
+        }}
       />
       <canvas
         ref={canvasRef}
         width="640"
         height="480"
-        style={{ position: 'absolute', zIndex: 2 }}
+               style={{
+          position: 'absolute',
+          zIndex: 2,
+          transform: 'scaleX(-1)', // Specchia il canvas in modo che corrisponda al video
+        }}
       />
       <div style={{ position: 'absolute', zIndex: 3, top: '20px', left: '20px', color: 'white', fontSize: '24px' }}>
         Time: {timer}s
