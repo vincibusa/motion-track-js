@@ -1,34 +1,34 @@
-import React, { useRef, useState, useEffect , useCallback} from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import * as MediapipePose from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
 import '@mediapipe/pose/pose';
 
-// Definisci manualmente gli indici dei landmark necessari
+// Define necessary landmark indices
 const POSE_LANDMARKS = {
-    NOSE: 0,
-    LEFT_SHOULDER: 11,
-    RIGHT_SHOULDER: 12,
-    LEFT_ELBOW: 13,
-    RIGHT_ELBOW: 14,
-    LEFT_WRIST: 15,
-    RIGHT_WRIST: 16,
-    LEFT_HIP: 23,
-    RIGHT_HIP: 24,
-    LEFT_KNEE: 25,
-    RIGHT_KNEE: 26,
-    LEFT_ANKLE: 27,
-    RIGHT_ANKLE: 28, // Fixed casing
-  };
+  NOSE: 0,
+  LEFT_SHOULDER: 11,
+  RIGHT_SHOULDER: 12,
+  LEFT_ELBOW: 13,
+  RIGHT_ELBOW: 14,
+  LEFT_WRIST: 15,
+  RIGHT_WRIST: 16,
+  LEFT_HIP: 23,
+  RIGHT_HIP: 24,
+  LEFT_KNEE: 25,
+  RIGHT_KNEE: 26,
+  LEFT_ANKLE: 27,
+  RIGHT_ANKLE: 28,
+};
 
-// Definisci le connessioni dello scheletro del corpo
+// Define skeleton connections
 const POSE_CONNECTIONS = [
-  // Braccia
+  // Arms
   [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_ELBOW],
   [POSE_LANDMARKS.LEFT_ELBOW, POSE_LANDMARKS.LEFT_WRIST],
   [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_ELBOW],
   [POSE_LANDMARKS.RIGHT_ELBOW, POSE_LANDMARKS.RIGHT_WRIST],
 
-  // Tronco
+  // Torso
   [POSE_LANDMARKS.NOSE, POSE_LANDMARKS.LEFT_SHOULDER],
   [POSE_LANDMARKS.NOSE, POSE_LANDMARKS.RIGHT_SHOULDER],
   [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.RIGHT_SHOULDER],
@@ -36,7 +36,7 @@ const POSE_CONNECTIONS = [
   [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_HIP],
   [POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.RIGHT_HIP],
 
-  // Gambe
+  // Legs
   [POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_KNEE],
   [POSE_LANDMARKS.LEFT_KNEE, POSE_LANDMARKS.LEFT_ANKLE],
   [POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_KNEE],
@@ -50,7 +50,7 @@ const MotionTracker = () => {
   const [timer, setTimer] = useState(10);
   const poseRef = useRef(null);
 
-  // Funzione per calcolare l'angolo di flessione della spalla
+  // Function to calculate shoulder flexion angle
   const calculateRightShoulderFlexion = (hip, shoulder, wrist) => {
     const hipToShoulder = [shoulder[0] - hip[0], shoulder[1] - hip[1]];
     const shoulderToWrist = [wrist[0] - shoulder[0], wrist[1] - shoulder[1]];
@@ -67,7 +67,8 @@ const MotionTracker = () => {
 
     const cosAngle =
       dotProduct / (magnitudeHipToShoulder * magnitudeShoulderToWrist);
-    let angleDegrees = Math.acos(Math.min(Math.max(cosAngle, -1), 1)) * (180 / Math.PI);
+    let angleDegrees =
+      Math.acos(Math.min(Math.max(cosAngle, -1), 1)) * (180 / Math.PI);
 
     if (wrist[1] > shoulder[1]) {
       angleDegrees = 180 - angleDegrees;
@@ -76,9 +77,8 @@ const MotionTracker = () => {
     return angleDegrees;
   };
 
-  // Funzione per disegnare lo scheletro personalizzato
+  // Function to draw custom skeleton
   const drawSkeleton = (landmarks, ctx) => {
-  
     ctx.strokeStyle = 'blue';
     ctx.lineWidth = 2;
 
@@ -101,111 +101,8 @@ const MotionTracker = () => {
     });
   };
 
-  // Configura MediaPipe Pose
-// Update Pose initialization to load non-SIMD WASM binaries
-const setupPose = useCallback(async () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');  // `ctx` might be necessary for drawing
-
-    // Check if ctx is necessary in your code, if not, remove the assignment.
-
-    // Create an instance of Pose without SIMD
-    const pose = new MediapipePose.Pose({
-      locateFile: (file) => {
-        // Load non-SIMD WASM binaries by replacing 'simd' with 'wasm'
-        if (file === 'pose_solution_packed_assets.bin') {
-          return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
-        }
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
-      },
-      useCpuInference: true, // Ensure CPU inference is used
-    });
-  
-    pose.setOptions({
-      modelComplexity: 1,
-      smoothLandmarks: true,
-      minDetectionConfidence: 0.6,
-      minTrackingConfidence: 0.6,
-      // Disable segmentation if not needed
-      enableSegmentation: false,
-    });
-  
-    pose.onResults(onResults);  // Make sure the `onResults` is available in this scope
-    poseRef.current = pose;
-  
-    // Manage webcam access
-    const camera = new Camera(video, {
-      onFrame: async () => {
-        await pose.send({ image: video });
-      },
-      width: 1280,
-      height: 720,
-    });
-    camera.start();
-    // Define the onResults function inside the useCallback
-    const onResults = (results) => {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-      if (results.poseLandmarks) {
-        const landmarks = results.poseLandmarks;
-        const requiredLandmarks = [
-          POSE_LANDMARKS.RIGHT_HIP,
-          POSE_LANDMARKS.RIGHT_SHOULDER,
-          POSE_LANDMARKS.RIGHT_WRIST,
-        ];
-  
-        const allLandmarksExist = requiredLandmarks.every(
-          (idx) => landmarks[idx]
-        );
-  
-        if (allLandmarksExist) {
-          const rightHip = [
-            landmarks[POSE_LANDMARKS.RIGHT_HIP].x * canvas.width,
-            landmarks[POSE_LANDMARKS.RIGHT_HIP].y * canvas.height,
-          ];
-          const rightShoulder = [
-            landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].x * canvas.width,
-            landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].y * canvas.height,
-          ];
-          const rightWrist = [
-            landmarks[POSE_LANDMARKS.RIGHT_WRIST].x * canvas.width,
-            landmarks[POSE_LANDMARKS.RIGHT_WRIST].y * canvas.height,
-          ];
-  
-          const newAngle = calculateRightShoulderFlexion(
-            rightHip,
-            rightShoulder,
-            rightWrist
-          );
-          setAngle(newAngle);
-  
-          // Disegna lo scheletro personalizzato
-          drawSkeleton(landmarks, ctx);
-  
-          // Disegna i landmark del corpo (opzionale)
-          landmarks.forEach((landmark, idx) => {
-            if (idx >= 11 && idx <= 32) { // Solo i landmark del corpo
-              const x = landmark.x * canvas.width;
-              const y = landmark.y * canvas.height;
-              ctx.fillStyle = '#FF0000';
-              ctx.beginPath();
-              ctx.arc(x, y, 2, 0, 2 * Math.PI);
-              ctx.fill();
-            }
-          });
-        } else {
-          console.warn('Alcuni landmarks necessari sono mancanti.');
-        }
-      } else {
-        console.warn('Nessun landmark rilevato.');
-      }
-    };
-
-    pose.onResults(onResults);  // Make sure the `onResults` is available in this scope
-  }, []); // Remove `onResults` from dependencies
+  // Define the onResults function before using it
+  const onResults = useCallback((results) => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -243,12 +140,12 @@ const setupPose = useCallback(async () => {
         );
         setAngle(newAngle);
 
-        // Disegna lo scheletro personalizzato
+        // Draw custom skeleton
         drawSkeleton(landmarks, ctx);
 
-        // Disegna i landmark del corpo (opzionale)
+        // Optionally draw body landmarks
         landmarks.forEach((landmark, idx) => {
-          if (idx >= 11 && idx <= 32) { // Solo i landmark del corpo
+          if (idx >= 11 && idx <= 32) { // Only body landmarks
             const x = landmark.x * canvas.width;
             const y = landmark.y * canvas.height;
             ctx.fillStyle = '#FF0000';
@@ -258,14 +155,61 @@ const setupPose = useCallback(async () => {
           }
         });
       } else {
-        console.warn('Alcuni landmarks necessari sono mancanti.');
+        console.warn('Some required landmarks are missing.');
       }
     } else {
-      console.warn('Nessun landmark rilevato.');
+      console.warn('No landmarks detected.');
     }
-  };
+  }, []);
 
-  // Funzione per gestire il timer
+  // Setup MediaPipe Pose
+  const setupPose = useCallback(async () => {
+    try {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+
+      // Create an instance of Pose without SIMD
+      const pose = new MediapipePose.Pose({
+        locateFile: (file) => {
+          // Replace 'simd' with 'wasm' to load non-SIMD WASM binaries
+          if (file.includes('simd')) {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file.replace('simd', 'wasm')}`;
+          }
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+        },
+        useCpuInference: true, // Ensure CPU inference is used
+      });
+
+      pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        minDetectionConfidence: 0.6,
+        minTrackingConfidence: 0.6,
+        enableSegmentation: false,
+      });
+
+      pose.onResults(onResults);
+      poseRef.current = pose;
+
+      // Manage webcam access
+      const camera = new Camera(video, {
+        onFrame: async () => {
+          try {
+            await pose.send({ image: video });
+          } catch (err) {
+            console.error('Error sending image to Pose:', err);
+          }
+        },
+        width: 1280,
+        height: 720,
+      });
+      camera.start();
+    } catch (error) {
+      console.error('Error setting up MediaPipe Pose:', error);
+    }
+  }, [onResults]);
+
+  // Handle timer
   useEffect(() => {
     if (timer > 0) {
       const interval = setInterval(() => {
@@ -297,7 +241,7 @@ const setupPose = useCallback(async () => {
         style={{
           position: 'absolute',
           zIndex: 1,
-          transform: 'scaleX(-1)', // Specchia il video per una visualizzazione naturale
+          transform: 'scaleX(-1)', // Mirror the video for natural viewing
         }}
       />
       <canvas
