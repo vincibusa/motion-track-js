@@ -83,24 +83,31 @@ const MotionTracker = () => {
       }
     };
 
-    console.log('Creazione dell\'istanza di Pose,b');
-    const pose = new Pose({
-      locateFile: (file) => {
-        console.log(`Richiesta del file: ${file}`);
-        switch (file) {
-          case 'pose_solution_packed_assets_loader.js':
-            return `/mediapipe/pose_solution_packed_assets_loader.js`;
-          case 'pose_solution_simd_wasm_bin.js':
-            return `/mediapipe/pose_solution_simd_wasm_bin.js`;
-          case 'pose_solution_wasm_bin.wasm':
-            return `/mediapipe/pose_solution_wasm_bin.wasm`;
-          case 'pose_solution_simd_wasm_bin.wasm':
-            return `/mediapipe/pose_solution_simd_wasm_bin.wasm`;
-          default:
-            return `/mediapipe/${file}`;
-        }
-      },
-    });
+    console.log('Creazione dell\'istanza di Pose');
+    let pose;
+    try {
+      pose = new Pose({
+        locateFile: (file) => {
+          const fileUrl = `/mediapipe/${file}`;
+          console.log(`File richiesto: ${fileUrl}`);
+          switch (file) {
+            case 'pose_solution_packed_assets_loader.js':
+              return `/mediapipe/pose_solution_packed_assets_loader.js`;
+            case 'pose_solution_simd_wasm_bin.js':
+              return `/mediapipe/pose_solution_simd_wasm_bin.js`;
+            case 'pose_solution_wasm_bin.wasm':
+              return `/mediapipe/pose_solution_wasm_bin.wasm`;
+            case 'pose_solution_simd_wasm_bin.wasm':
+              return `/mediapipe/pose_solution_simd_wasm_bin.wasm`;
+            default:
+              return `/mediapipe/${file}`;
+          }
+        },
+      });
+    } catch (error) {
+      console.error('Errore durante la creazione dell\'istanza di Pose:', error);
+      return;
+    }
 
     console.log('Impostazione delle opzioni di Pose');
     pose.setOptions({
