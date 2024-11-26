@@ -3,23 +3,22 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import * as MediapipePose from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
 import '@mediapipe/pose/pose';
-import { FaStopwatch, FaChartLine, FaAngleLeft, FaPlay } from "react-icons/fa";
+import { FaStopwatch, FaChartLine, FaPlay, FaAngleRight } from "react-icons/fa";
 
 const POSE_LANDMARKS = {
-  LEFT_SHOULDER: 11,
-  LEFT_ELBOW: 13,
-  LEFT_WRIST: 15,
-  LEFT_HIP: 23,
+  RIGHT_SHOULDER: 12,
+  RIGHT_ELBOW: 14,
+  RIGHT_WRIST: 16,
+  RIGHT_HIP: 24,
 };
 
 const REQUIRED_LANDMARKS = [
-  POSE_LANDMARKS.LEFT_HIP,
-  POSE_LANDMARKS.LEFT_SHOULDER,
-  POSE_LANDMARKS.LEFT_ELBOW,
-  POSE_LANDMARKS.LEFT_WRIST,
+  POSE_LANDMARKS.RIGHT_HIP,
+  POSE_LANDMARKS.RIGHT_SHOULDER,
+  POSE_LANDMARKS.RIGHT_ELBOW,
+  POSE_LANDMARKS.RIGHT_WRIST,
 ];
-
-const MotionTrackerLeft = () => {
+const ShoulderFlexionRight = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const cameraRef = useRef(null); // Ref for the Camera
@@ -41,37 +40,97 @@ const MotionTrackerLeft = () => {
     // Convert coordinates to vectors
     const hipToShoulder = [shoulder[0] - hip[0], shoulder[1] - hip[1]];
     const shoulderToElbow = [elbow[0] - shoulder[0], elbow[1] - shoulder[1]];
-
+  
     // Calculate dot product and magnitudes
     const dotProduct =
-      hipToShoulder[0] * shoulderToElbow[0] +
-      hipToShoulder[1] * shoulderToElbow[1];
-    const magnitude1 = Math.sqrt(
-      hipToShoulder[0] ** 2 + hipToShoulder[1] ** 2
-    );
-    const magnitude2 = Math.sqrt(
-      shoulderToElbow[0] ** 2 + shoulderToElbow[1] ** 2
-    );
-
+      hipToShoulder[0] * shoulderToElbow[0] + hipToShoulder[1] * shoulderToElbow[1];
+    const magnitude1 = Math.sqrt(hipToShoulder[0] ** 2 + hipToShoulder[1] ** 2);
+    const magnitude2 = Math.sqrt(shoulderToElbow[0] ** 2 + shoulderToElbow[1] ** 2);
+  
     // Calculate the angle in radians
-    const cosAngle = Math.min(
-      Math.max(dotProduct / (magnitude1 * magnitude2), -1),
-      1
-    );
+    const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
     let angleRadians = Math.acos(cosAngle);
-
+  
     // Convert to degrees
     let angleDegrees = (angleRadians * 180) / Math.PI;
-
+  
     // Adjust for natural flexion (arm down vs raised)
     if (elbow[1] > shoulder[1]) {
       angleDegrees = 180 - angleDegrees; // Arm down
     } else {
       angleDegrees = 180 - angleDegrees; // Arm raised
     }
-
+  
     return angleDegrees;
   };
+  
+  const checkPositionAlignment = (hip, shoulder) => {
+    // Define the ideal perpendicular direction (vertical line passing through the hip)
+    const idealDirection = [0, -1]; // Y-axis pointing upwards
+  
+    // Calculate the vector from the hip to the shoulder
+    const hipToShoulder = [shoulder[0] - hip[0], shoulder[1] - hip[1]];
+  
+    // Normalize both vectors
+    const lengthHipToShoulder = Math.sqrt(hipToShoulder[0] ** 2 + hipToShoulder[1] ** 2);
+    const unitHipToShoulder = [hipToShoulder[0] / lengthHipToShoulder, hipToShoulder[1] / lengthHipToShoulder];
+  
+    // Calculate the dot product between the two unit vectors
+    const dotProduct = idealDirection[0] * unitHipToShoulder[0] + idealDirection[1] * unitHipToShoulder[1];
+  
+    // Calculate the angle between the two vectors
+    const angle = Math.acos(dotProduct) * (180 / Math.PI);
+  
+    return angle;
+  };
+  
+  const onResults = useCallback(
+    (results) => {
+      if (!trackingRef.current) return;
+  
+      const canvas = canvasRef.current;
+      if (!canvas || !results.poseLandmarks) return;
+  
+      const ctx = canvas.getContext('2d');
+      const { width, height } = canvas;
+      ctx.clearRect(0, 0, width, height);
+  
+      const landmarks = results.poseLandmarks;
+  
+      const allLandmarksExist = REQUIRED_LANDMARKS.every(
+        (idx) => landmarks[idx]
+      );
+      if (allLandmarksExist) {
+        const rightHip = [
+          landmarks[POSE_LANDMARKS.RIGHT_HIP].x * width,
+          landmarks[POSE_LANDMARKS.RIGHT_HIP].y * height,
+        ];
+        const rightShoulder = [
+          landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].x * width,
+          landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].y * height,
+        ];
+        const rightElbow = [
+          landmarks[POSE_LANDMARKS.RIGHT_ELBOW].x * width,
+          landmarks[POSE_LANDMARKS.RIGHT_ELBOW].y * height,
+        ];
+  
+        const newAngle = calculateShoulderFlexion(rightHip, rightShoulder, rightElbow);
+        setAngle(newAngle);
+        setMaxFlexion((prevMax) => Math.max(prevMax, newAngle));
+  
+        // Check for alignment with the ideal position
+        const alignmentAngle = checkPositionAlignment(rightHip, rightShoulder);
+        const tolerance = 30; // Tolerance of 30 degrees
+        if (alignmentAngle > tolerance) {
+          alert("Posizione errata! Riemetti la spalla sulla perpendicolare.");
+        }
+  
+        drawLandmarks(landmarks, ctx, width, height);
+      }
+    },
+    []
+  );
+  
 
   const classifyFlexion = (angle) => {
     if (angle >= 0 && angle <= 100) return "Scarsa mobilità";
@@ -110,49 +169,7 @@ const MotionTrackerLeft = () => {
     });
   };
 
-  const onResults = useCallback(
-    (results) => {
-      if (!trackingRef.current) return;
 
-      const canvas = canvasRef.current;
-      if (!canvas || !results.poseLandmarks) return;
-
-      const ctx = canvas.getContext('2d');
-      const { width, height } = canvas;
-      ctx.clearRect(0, 0, width, height);
-
-      const landmarks = results.poseLandmarks;
-
-      const allLandmarksExist = REQUIRED_LANDMARKS.every(
-        (idx) => landmarks[idx]
-      );
-      if (allLandmarksExist) {
-        const leftHip = [
-          landmarks[POSE_LANDMARKS.LEFT_HIP].x * width,
-          landmarks[POSE_LANDMARKS.LEFT_HIP].y * height,
-        ];
-        const leftShoulder = [
-          landmarks[POSE_LANDMARKS.LEFT_SHOULDER].x * width,
-          landmarks[POSE_LANDMARKS.LEFT_SHOULDER].y * height,
-        ];
-        const leftElbow = [
-          landmarks[POSE_LANDMARKS.LEFT_ELBOW].x * width,
-          landmarks[POSE_LANDMARKS.LEFT_ELBOW].y * height,
-        ];
-
-        const newAngle = calculateShoulderFlexion(
-          leftHip,
-          leftShoulder,
-          leftElbow
-        );
-        setAngle(newAngle);
-        setMaxFlexion((prevMax) => Math.max(prevMax, newAngle));
-
-        drawLandmarks(landmarks, ctx, width, height);
-      }
-    },
-    []
-  );
 
   const setupPose = useCallback(() => {
     const video = videoRef.current;
@@ -279,7 +296,7 @@ const MotionTrackerLeft = () => {
                 </span>
               </div>
               <div className="flex items-center space-x-3 text-white">
-                <FaAngleLeft className="text-green-400 text-xl" />
+                <FaAngleRight className="text-green-400 text-xl" />
                 <span className="text-lg font-semibold shadow-sm">
                   Spalla Sinistra: {Math.round(angle)}°
                 </span>
@@ -328,4 +345,4 @@ const MotionTrackerLeft = () => {
   );
 };
 
-export default MotionTrackerLeft;
+export default ShoulderFlexionRight;
