@@ -1,7 +1,7 @@
 // App.jsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import HeroSection from "./HeroSection";
+
 import ShoulderFlexionLeft from "./Components/ShoulderFlexionLeft";
 import ShoulderFlexionRight from "./Components/ShoulderFlexionRight";
 import HomePage from "./Pages/HomePage";
