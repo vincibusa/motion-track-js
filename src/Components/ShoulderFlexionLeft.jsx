@@ -23,6 +23,7 @@ const ShoulderFlexionLeft = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const cameraRef = useRef(null); // Ref for the Camera
+  const containerRef = useRef(null);
   const poseRef = useRef(null);
   const trackingRef = useRef(false); // Ref to keep track of the current tracking state
 
@@ -237,9 +238,24 @@ const ShoulderFlexionLeft = () => {
     return () => clearInterval(interval);
   }, [isTracking]);
 
+  const requestFullscreen = () => {
+    const container = containerRef.current;
+    if (container && container.requestFullscreen) {
+      container.requestFullscreen();
+    } else if (container && container.webkitRequestFullscreen) {
+      container.webkitRequestFullscreen(); // Per Safari
+    } else if (container && container.mozRequestFullScreen) {
+      container.mozRequestFullScreen(); // Per Firefox
+    } else if (container && container.msRequestFullscreen) {
+      container.msRequestFullscreen(); // Per IE/Edge
+    }
+  };
+
   const handleStart = () => {
+ 
     setHasStarted(true);
     setIsTracking(true);
+    requestFullscreen()
     setTimer(0);
     setAngle(0);
     setMaxFlexion(0);
@@ -247,7 +263,7 @@ const ShoulderFlexionLeft = () => {
 
   return (
     <div className="flex flex-col bg-gray-900 p-6 rounded-lg shadow-xl max-w-4xl mx-auto">
-      <div className="relative aspect-video mb-6">
+      <div className="relative aspect-video mb-6"  ref={containerRef}>
       <video
         ref={videoRef}
         autoPlay
@@ -305,7 +321,7 @@ const ShoulderFlexionLeft = () => {
             </div>
 
             {(!isTracking && timer >= 10) && (
-              <div className="bg-gray-700 rounded-lg p-4">
+              <div className="bg-gray-700 rounded-lg p-4 absolute">
                 <h3 className="text-white text-lg font-bold mb-3 flex items-center">
                   <FaChartLine className="mr-2 text-yellow-400" />
                   Riepilogo
