@@ -16,6 +16,20 @@ const MobilitaTest = () => {
       image: "https://images.unsplash.com/photo-1576678927484-cc907957088c?fit=crop&h=300",
       description: "Test per valutare la mobilità della spalla destra attraverso esercizi di flessione.",
       route: "/shoulder-right" // Definisci il percorso della navigazione
+    },
+    {
+      id: 3,
+      title: "Flessione Ginocchio Sinistro",
+      image: "https://images.unsplash.com/photo-1576678927484-cc907957088c?fit=crop&h=300",
+      description: "Test per valutare la mobilità della spalla destra attraverso esercizi di flessione.",
+      route: "/knee-left" // Definisci il percorso della navigazione
+    },
+    {
+      id: 4,
+      title: "Flessione Ginocchio Destro",
+      image: "https://images.unsplash.com/photo-1576678927484-cc907957088c?fit=crop&h=300",
+      description: "Test per valutare la mobilità della spalla destra attraverso esercizi di flessione.",
+      route: "/knee-right" // Definisci il percorso della navigazione
     }
   ];
 
