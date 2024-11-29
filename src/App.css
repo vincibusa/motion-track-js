@@ -36,3 +36,23 @@
     transform: rotate(360deg);
   }
 }
+
+
+/* Definisci l'animazione per il gradiente */
+@keyframes gradient-animation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Applicare l'animazione */
+.animate-gradient {
+  animation: gradient-animation 15s ease infinite;
+  background-size: 400% 400%; /* Estende il gradiente per coprire più spazio */
+}

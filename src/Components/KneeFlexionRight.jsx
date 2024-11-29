@@ -60,36 +60,41 @@ const KneeFlexionRight = () => {
   }, []);
 
   const calculateKneeAngle = (hip, knee, ankle) => {
-    // Vettori
-    const hipToKnee = [knee[0] - hip[0], knee[1] - hip[1]];
-    const kneeToAnkle = [ankle[0] - knee[0], ankle[1] - knee[1]];
+    // Vettori: da ginocchio a anca e da ginocchio a caviglia
+    const p1 = knee;
+    const p2 = hip;
+    const p3 = ankle;
   
-    // Prodotto scalare e magnitudine
-    const dotProduct = hipToKnee[0] * kneeToAnkle[0] + hipToKnee[1] * kneeToAnkle[1];
-    const magnitude1 = Math.sqrt(hipToKnee[0] ** 2 + hipToKnee[1] ** 2);
-    const magnitude2 = Math.sqrt(kneeToAnkle[0] ** 2 + kneeToAnkle[1] ** 2);
+    // Vettore p1-p2 (ginocchio-anca)
+    const v1x = p2[0] - p1[0];
+    const v1y = p2[1] - p1[1];
   
-    // Calcolare l'angolo in radianti
-    const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
-    let angleRadians = Math.acos(cosAngle);
+    // Vettore p1-p3 (ginocchio-caviglia)
+    const v2x = p3[0] - p1[0];
+    const v2y = p3[1] - p1[1];
+  
+    // Prodotto scalare tra i vettori
+    const dotProduct = v1x * v2x + v1y * v2y;
+  
+    // Calcolare le magnitudini dei vettori
+    const magnitudeV1 = Math.sqrt(v1x * v1x + v1y * v1y);
+    const magnitudeV2 = Math.sqrt(v2x * v2x + v2y * v2y);
+  
+    // Calcolare il coseno dell'angolo
+    const cosAngle = dotProduct / (magnitudeV1 * magnitudeV2);
+  
+    // Correggere per errori numerici, assicuriamoci che il coseno sia tra -1 e 1
+    const angleRadians = Math.acos(Math.min(Math.max(cosAngle, -1), 1));
   
     // Convertire in gradi
-    let angleDegrees = (angleRadians * 180) / Math.PI;
+    const angleDegrees = angleRadians * (180 / Math.PI);
   
+    
+  
+    // Restituire l'angolo
     return angleDegrees;
   };
   
-  const checkKneeAlignment = (hip, knee, ankle) => {
-    // Verifica che i tre punti siano allineati sulla stessa perpendicolare
-    const tolerance = 10; // Tollerenza per la verifica di allineamento
-    const angle = calculateKneeAngle(hip, knee, ankle);
-    if (Math.abs(angle - 90) <= tolerance) {
-      return 'Posizione corretta (90°)';
-    } else if (Math.abs(angle - 180) <= tolerance) {
-      return 'Posizione errata (180°)';
-    }
-    return 'Posizione fuori tolleranza';
-  };
   
   
   const onResults = useCallback(
@@ -125,30 +130,24 @@ const KneeFlexionRight = () => {
       // Aggiorna maxFlexion se l'angolo è maggiore di maxFlexion
       setMaxFlexion((prevMax) => {
         const updatedMax = Math.max(prevMax, kneeAngle);
-        console.log(updatedMax); // Logga il valore aggiornato
         localStorage.setItem('maxFlexion', updatedMax.toString());
         return updatedMax;
       });
   
-      // Verifica l'allineamento
-      const alignment = checkKneeAlignment(rightHip, rightKnee, rightAnkle);
-      if (alignment.includes('errata')) {
-        toast.error("Posizione errata! Allinea correttamente il ginocchio.", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-      }
-  
+      // Disegna i landmarks e l'angolo del ginocchio
       drawLandmarks(landmarks, ctx, width, height);
+      drawAngle(ctx, rightKnee, kneeAngle); // Disegna l'angolo sul canvas
     },
     []
   );
   
-
+  
+  const drawAngle = (ctx, position, angle) => {
+    ctx.fillStyle = 'yellow'; // Colore del testo
+    ctx.font = '20px Arial'; // Stile del testo
+    ctx.fillText(`${Math.round(angle)}°`, position[0] + 10, position[1] - 10); // Scrive l'angolo vicino al ginocchio
+  };
+  
 
   const classifyKneeAngle = (angle) => {
     if (angle >= 0 && angle <= 60) return "Angolo insufficiente";

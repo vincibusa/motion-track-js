@@ -1,6 +1,7 @@
 // App.jsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import './index.css'; // O il percorso corretto del tuo file CSS
 
 import ShoulderFlexionLeft from "./Components/ShoulderFlexionLeft";
 import ShoulderFlexionRight from "./Components/ShoulderFlexionRight";
