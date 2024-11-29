@@ -6,6 +6,7 @@ import ShoulderFlexionLeft from "./Components/ShoulderFlexionLeft";
 import ShoulderFlexionRight from "./Components/ShoulderFlexionRight";
 import HomePage from "./Pages/HomePage";
 import MobilitaTest from "./Pages/MobilitaTest";
+import Report from "./Components/Report";
 function App() {
   return (
     <Router>
@@ -14,6 +15,7 @@ function App() {
         <Route path="/mobility-test" element={<MobilitaTest/>} />
         <Route path="/shoulder-right" element={<ShoulderFlexionRight />} />
         <Route path="/shoulder-left" element={<ShoulderFlexionLeft />} />
+        <Route path="/report" element={<Report/>}/>
       </Routes>
     </Router>
   );

@@ -1,9 +1,12 @@
-// MotionTrackerLeft.jsx
+
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import * as MediapipePose from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
 import '@mediapipe/pose/pose';
-import { FaStopwatch, FaChartLine, FaPlay, FaAngleRight } from "react-icons/fa";
+import { FaStopwatch, FaChartLine, FaAngleLeft,  } from "react-icons/fa";
+import { BsPlayCircleFill } from 'react-icons/bs';
+import { useNavigate } from 'react-router-dom';  // Importa useNavigate
+import { ToastContainer, toast } from 'react-toastify';
 
 const POSE_LANDMARKS = {
   RIGHT_SHOULDER: 12,
@@ -19,22 +22,43 @@ const REQUIRED_LANDMARKS = [
   POSE_LANDMARKS.RIGHT_WRIST,
 ];
 const ShoulderFlexionRight = () => {
+
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const cameraRef = useRef(null); // Ref for the Camera
+  const containerRef = useRef(null);
   const poseRef = useRef(null);
   const trackingRef = useRef(false); // Ref to keep track of the current tracking state
 
+  const navigate = useNavigate();  // Inizializza navigate
   const [angle, setAngle] = useState(0);
   const [maxFlexion, setMaxFlexion] = useState(0);
   const [timer, setTimer] = useState(0);
   const [isTracking, setIsTracking] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
-
+  const [countdown, setCountdown] = useState(5); // Timer iniziale
+  const [isCountdownActive, setIsCountdownActive] = useState(false); // 
+  const [cameraPermissionGranted, setCameraPermissionGranted] = useState(false);
   // Update the trackingRef whenever tracking state changes
   useEffect(() => {
     trackingRef.current = isTracking;
   }, [isTracking]);
+
+  const requestCameraPermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setCameraPermissionGranted(true); // Permesso concesso
+      stream.getTracks().forEach(track => track.stop()); // Ferma il flusso per ora
+    } catch (error) {
+      alert('Per favore, consenti l\'accesso alla fotocamera per utilizzare questa funzione.');
+      setCameraPermissionGranted(false);
+    }
+  };
+
+  useEffect(() => {
+    // Richiedi il permesso per la fotocamera al caricamento del componente
+    requestCameraPermission();
+  }, []);
 
   const calculateShoulderFlexion = (hip, shoulder, elbow) => {
     // Convert coordinates to vectors
@@ -116,13 +140,26 @@ const ShoulderFlexionRight = () => {
   
         const newAngle = calculateShoulderFlexion(rightHip, rightShoulder, rightElbow);
         setAngle(newAngle);
-        setMaxFlexion((prevMax) => Math.max(prevMax, newAngle));
-  
+        setMaxFlexion((prevMax) => {
+          const updatedMax = Math.max(prevMax, newAngle);
+          console.log(updatedMax); // Logga il valore aggiornato
+          localStorage.setItem('maxFlexion', updatedMax.toString());
+          return updatedMax;
+        });
+
+       
         // Check for alignment with the ideal position
         const alignmentAngle = checkPositionAlignment(rightHip, rightShoulder);
         const tolerance = 30; // Tolerance of 30 degrees
         if (alignmentAngle > tolerance) {
-          alert("Posizione errata! Riemetti la spalla sulla perpendicolare.");
+          toast.error("Posizione errata! Riemetti la spalla sulla perpendicolare.", {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
         }
   
         drawLandmarks(landmarks, ctx, width, height);
@@ -130,7 +167,7 @@ const ShoulderFlexionRight = () => {
     },
     []
   );
-  
+
 
   const classifyFlexion = (angle) => {
     if (angle >= 0 && angle <= 100) return "Scarsa mobilità";
@@ -218,92 +255,143 @@ const ShoulderFlexionRight = () => {
   }, [setupPose, isTracking]);
 
   // Timer logic
-  useEffect(() => {
-    let interval;
-    if (isTracking) {
-      interval = setInterval(() => {
-        setTimer((prev) => {
-          if (prev >= 10) {
-            setIsTracking(false);
-            return prev;
-          }
-          return prev + 1;
-        });
-        setAngle((prev) => prev + Math.random() * 5 - 2.5);
-      }, 1000);
+// Timer logic
+useEffect(() => {
+  let interval;
+  if (isTracking) {
+    interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev >= 10) {
+         
+    
+          
+          setIsTracking(false); // Ferma il tracking quando il timer raggiunge 10
+          
+        
+          setTimeout(() => {
+            navigate('/report'); // Naviga alla pagina report dopo il ritardo
+          }, 500); // Ritardo di 2000ms (2 secondi)
+          return prev;
+        }
+        return prev + 1;
+      });
+      setAngle((prev) => prev + Math.random() * 5 - 2.5); // Cambia l'angolo a caso
+    }, 1000);
+  }
+
+  return () => clearInterval(interval); // Pulisci l'intervallo quando il componente viene smontato
+}, [isTracking, navigate]);
+
+
+  const requestFullscreen = () => {
+    const container = containerRef.current;
+    if (container && container.requestFullscreen) {
+      container.requestFullscreen();
+    } else if (container && container.webkitRequestFullscreen) {
+      container.webkitRequestFullscreen(); // Per Safari
+    } else if (container && container.mozRequestFullScreen) {
+      container.mozRequestFullScreen(); // Per Firefox
+    } else if (container && container.msRequestFullscreen) {
+      container.msRequestFullscreen(); // Per IE/Edge
     }
-
-    return () => clearInterval(interval);
-  }, [isTracking]);
-
-  const handleStart = () => {
-    setHasStarted(true);
-    setIsTracking(true);
-    setTimer(0);
-    setAngle(0);
-    setMaxFlexion(0);
   };
 
+  const handleStart = async () => {
+    if (!cameraPermissionGranted) {
+      // Se i permessi non sono stati concessi, richiedili
+      await requestCameraPermission();
+      
+      // Se dopo la richiesta i permessi non sono ancora concessi, mostra un messaggio
+      if (!cameraPermissionGranted) {
+        alert('Non hai i permessi per utilizzare la fotocamera. Per favore, consenti l\'accesso.');
+        return;
+      }
+    }
+    requestFullscreen()
+    // Procedi con il countdown solo se i permessi sono concessi
+    setIsCountdownActive(true);
+    let seconds = 5;
+  
+    const interval = setInterval(() => {
+      seconds -= 1;
+      setCountdown(seconds);
+  
+      if (seconds <= 0) {
+        clearInterval(interval);
+        setIsCountdownActive(false);
+        const today = new Date().toISOString();
+        localStorage.setItem('startDate', today);
+        setHasStarted(true);
+        setIsTracking(true);
+       
+      }
+    }, 1000);
+  };
+  
+
   return (
-    <div className="flex flex-col bg-gray-900 p-6 rounded-lg shadow-xl max-w-4xl mx-auto">
-      <div className="relative aspect-video mb-6">
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          transform: 'scaleX(-1)',
-        }}
-      />
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          transform: 'scaleX(-1)',
-        }}
-      />
+    <div className="h-screen w-screen flex flex-col items-center justify-center bg-gray-900" 
+    ref={containerRef}
+    >
+             <ToastContainer></ToastContainer>
+
+       {/* Back Button */}
+       <button
+        className="absolute top-4 left-4 text-white bg-gray-700 p-2 rounded-full z-50"
+        onClick={() => navigate('/mobility-test')}
+      >
+        <FaAngleLeft size={24} />
+      </button>
+
+      {/* Timer */}
+      <div className="absolute top-4 right-4 text-white bg-gray-700 p-2 rounded-full flex items-center z-50">
+        <FaStopwatch size={20} className="mr-2" />
+        {timer}s
       </div>
 
-      <div className="bg-gray-800 rounded-lg p-6">
-        {!hasStarted ? (
-          <div className="flex justify-center">
-            <button
-              className="bg-green-500 hover:bg-green-600 px-6 py-3 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50 text-white flex items-center space-x-2"
-              onClick={handleStart}
-            >
-              <FaPlay />
-              <span>Inizia Tracking</span>
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3 text-white">
-                <FaStopwatch className="text-blue-400 text-xl" />
-                <span className="text-lg font-semibold shadow-sm">
-                  Tempo: {timer}s / 10s
-                </span>
-              </div>
-              <div className="flex items-center space-x-3 text-white">
-                <FaAngleRight className="text-green-400 text-xl" />
-                <span className="text-lg font-semibold shadow-sm">
-                  Spalla Sinistra: {Math.round(angle)}°
-                </span>
-              </div>
-            </div>
+      {/* Contenitore Video e Canvas */}
+      <div className="relative w-full h-full">
+        <video
+            style={{
+              transform: 'scaleX(-1)',
+            }}
+          ref={videoRef}
+          className="absolute inset-0 w-full h-full object-cover "
+          autoPlay
+          playsInline
+          muted
+        ></video>
+        <canvas
+           style={{
+              transform: 'scaleX(-1)',
+            }}
+          ref={canvasRef}
+          className="absolute inset-0 w-full h-full"
+        ></canvas>
+      </div>
 
-            {(!isTracking && timer >= 10) && (
+      {/* Pulsante Centrale */}
+      <div className="absolute inset-0 flex items-center justify-center">
+      {!isTracking && !isCountdownActive && (
+        <button
+          onClick={handleStart}
+          className="flex items-center justify-center w-16 h-16 bg-green-500 rounded-full shadow-lg hover:bg-green-600"
+        >
+          <BsPlayCircleFill className="text-white text-4xl" />
+        </button>
+      )}
+
+      {/* Timer che appare durante il conto alla rovescia */}
+      {isCountdownActive && (
+        <div className="absolute inset-0 flex items-center justify-center text-2xl text-white">
+          Inizio in: {countdown} secondi
+        </div>
+      )}
+      </div>
+
+      {/* Controlli di Feedback in basso */}
+      <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center space-x-4 z-50">
+      {(isTracking ) && (
               <div className="bg-gray-700 rounded-lg p-4">
                 <h3 className="text-white text-lg font-bold mb-3 flex items-center">
                   <FaChartLine className="mr-2 text-yellow-400" />
@@ -321,25 +409,6 @@ const ShoulderFlexionRight = () => {
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        <div className="mt-6 border-t border-gray-700 pt-4">
-          <div className="flex justify-between items-center text-white">
-            {hasStarted && (
-              <button
-                className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50"
-                onClick={() => setIsTracking(!isTracking)}
-                disabled={timer >= 10}
-              >
-                {isTracking ? "Stop Tracking" : "Start Tracking"}
-              </button>
-            )}
-            <div className="text-sm text-gray-400">
-              Last updated: {new Date().toLocaleTimeString()}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
