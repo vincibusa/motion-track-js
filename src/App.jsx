@@ -7,6 +7,7 @@ import ShoulderFlexionLeft from "./Components/ShoulderFlexionLeft";
 import ShoulderFlexionRight from "./Components/ShoulderFlexionRight";
 import HomePage from "./Pages/HomePage";
 import MobilitaTest from "./Pages/MobilitaTest";
+import ExerciseTest from "./Pages/ExerciseTest";
 import Report from "./Components/Report";
 import KneeFlexionLeft from "./Components/KneeFlexionLeft";
 import KneeFlexionRight from "./Components/KneeFlexionRight";
@@ -16,6 +17,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage/>} />
         <Route path="/mobility-test" element={<MobilitaTest/>} />
+        <Route path="/exercise-test" element={<ExerciseTest/>} />
         <Route path="/shoulder-right" element={<ShoulderFlexionRight />} />
         <Route path="/shoulder-left" element={<ShoulderFlexionLeft />} />
         <Route path="/knee-left" element={<KneeFlexionLeft/>}/>

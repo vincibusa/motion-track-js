@@ -1,39 +1,37 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom"; // Usa useNavigate
+import { Link, useNavigate } from "react-router-dom"; // Usa useNavigate invece di useHistory
 
-const MobilitaTest = () => {
+const ExerciseTest = () => {
   const navigate = useNavigate(); // Usa useNavigate per la navigazione
 
   const cards = [
     {
       id: 1,
-      title: "Flessione Spalla Sinistra",
-      image: "https://i.ibb.co/kDN2fqR/ecfba699-dde5-4e64-8275-56633873be66.jpg",
-      description: "Test per valutare la mobilità della spalla sinistra attraverso esercizi di flessione.",
-      route: "/shoulder-left",
+      title: "Esercizi di Riabilitazione Ginocchio Sinistro",
+      image: "https://img.freepik.com/free-vector/physical-therapy-exercise-concept-illustration_114360-8921.jpg?t=st=1732898372~exp=1732901972~hmac=509603820b72ece0954c017b0c4aea04a40260e548c77cbfbc3318bba176602f&w=740",
+      description: "Esercizi di riabilitazione per rafforzare il ginocchio sinistro e migliorare la mobilità.",
+      route: "/knee-left",
     },
     {
       id: 2,
-      title: "Flessione Spalla Destra",
-      image: "https://i.ibb.co/kDN2fqR/ecfba699-dde5-4e64-8275-56633873be66.jpg",
-      description: "Test per valutare la mobilità della spalla destra attraverso esercizi di flessione.",
-      route: "/shoulder-right",
+      title: "Esercizi di Riabilitazione Ginocchio Destro",
+      image: "https://img.freepik.com/free-vector/physical-therapy-exercise-concept-illustration_114360-8921.jpg?t=st=1732898372~exp=1732901972~hmac=509603820b72ece0954c017b0c4aea04a40260e548c77cbfbc3318bba176602f&w=740",
+      description: "Esercizi di riabilitazione per il ginocchio destro, focalizzati su forza e recupero della mobilità.",
+      route: "/knee-right",
     },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-blue-300 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
-        <Link to="/">
-            <motion.button
-            className="bg-transparent text-blue-600 hover:text-blue-800 text-lg font-semibold mb-6 focus:outline-none"
-            initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              &#8592; Torna indietro
-            </motion.button>
-          </Link>
+        {/* Bottone per tornare indietro */}
+        <motion.button
+          onClick={() => navigate(-1)} // Usa navigate(-1) per tornare indietro
+          className="bg-transparent text-blue-600 hover:text-blue-800 text-lg font-semibold mb-6 focus:outline-none"
+        >
+          &#8592; Torna indietro
+        </motion.button>
 
         {/* Titolo e sottotitolo migliorati */}
         <div className="text-center mb-12">
@@ -43,7 +41,7 @@ const MobilitaTest = () => {
             transition={{ duration: 0.8 }}
             className="text-5xl font-extrabold text-gray-800 mb-3"
           >
-            Test di Mobilità Articolare
+            Esercizi di Riabilitazione
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -51,9 +49,9 @@ const MobilitaTest = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-lg text-gray-600 mb-8"
           >
-            Un test di mobilità articolare serve per valutare il range di movimento (ROM) di una
-            articolazione, ossia quanto una parte del corpo può muoversi senza dolore. Scopri la
-            tua flessibilità e monitora il progresso con questi esercizi mirati.
+            Gli esercizi di riabilitazione sono fondamentali per il recupero da infortuni o interventi chirurgici. 
+            Questi esercizi mirano a ripristinare la forza, la mobilità e la funzionalità delle articolazioni, 
+            riducendo il dolore e migliorando la qualità della vita. Scegli l'esercizio di riabilitazione che ti interessa.
           </motion.p>
         </div>
 
@@ -70,10 +68,10 @@ const MobilitaTest = () => {
                 role="button"
                 onKeyPress={(e) => {
                   if (e.key === "Enter") {
-                    console.log(`${card.title} test selected`);
+                    console.log(`${card.title} exercise selected`);
                   }
                 }}
-                onClick={() => console.log(`${card.title} test selected`)}
+                onClick={() => console.log(`${card.title} exercise selected`)}
               >
                 {/* Contenitore immagine proporzionato a 16:9 */}
                 <div className="w-full aspect-w-16 aspect-h-9">
@@ -99,4 +97,4 @@ const MobilitaTest = () => {
   );
 };
 
-export default MobilitaTest;
+export default ExerciseTest;
