@@ -119,7 +119,7 @@ const Report = ({ flexionValue }) => {
               className="w-1/2 flex items-center justify-center bg-green-600 text-white py-3 rounded-lg shadow hover:bg-green-700 focus:outline-none"
               onClick={() => navigate(-1)}
             >
-              <FaRedoAlt className="mr-2" />
+              <FaRedoAlt className="mr-2 w-4 h-4" />
               Riprova
             </button>
 
@@ -127,7 +127,7 @@ const Report = ({ flexionValue }) => {
               className="w-1/2 flex items-center justify-center bg-blue-600 text-white py-3 rounded-lg shadow hover:bg-blue-700 focus:outline-none"
               onClick={submitFeedback}
             >
-              <FaHome className="mr-2" />
+              <FaHome className="mr-2 w-4 h-4" />
               Invia Feedback e Torna alla Home
             </button>
           </div>
