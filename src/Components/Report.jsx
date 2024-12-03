@@ -4,25 +4,17 @@ import { useNavigate } from "react-router-dom";
 
 const Report = ({ flexionValue }) => {
   const [isAnimating, setIsAnimating] = useState(false);
-  const [maxFlexion, setMaxFlexion] = useState(0); // Valore iniziale
+  const [maxFlexion, setMaxFlexion] = useState(0);
+  const [selectedFeedback, setSelectedFeedback] = useState(null); // Stato per il feedback selezionato
   const startDate = localStorage.getItem("startDate");
   const navigate = useNavigate();
 
   useEffect(() => {
     const savedMaxFlexion = localStorage.getItem("maxFlexion");
     if (savedMaxFlexion) {
-      const parsedMaxFlexion = parseFloat(savedMaxFlexion); // Converti in numero
-      setMaxFlexion(parsedMaxFlexion); // Aggiorna lo stato locale
+      setMaxFlexion(parseFloat(savedMaxFlexion));
     }
   }, []);
-
-  const convertToItalianDate = (isoDate) => {
-    const date = new Date(isoDate); // Converte la stringa ISO in un oggetto Date
-    const day = date.getDate().toString().padStart(2, "0"); // Giorno con zero iniziale
-    const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Mese con zero iniziale
-    const year = date.getFullYear(); // Anno
-    return `${day}/${month}/${year}`; // Formato italiano
-  };
 
   useEffect(() => {
     setIsAnimating(true);
@@ -36,6 +28,16 @@ const Report = ({ flexionValue }) => {
     if (angle >= 150 && angle <= 170) return "Buona";
     if (angle > 170 && angle <= 180) return "Ottima";
     return "Invalido";
+  };
+
+  const submitFeedback = async () => {
+    if (!selectedFeedback) return alert("Per favore, seleziona un feedback.");
+
+    // Simulazione dell'invio del dato al database
+    console.log("Feedback inviato:", selectedFeedback);
+
+    // Reindirizzamento alla homepage dopo l'invio del feedback
+    navigate("/");
   };
 
   return (
@@ -67,7 +69,7 @@ const Report = ({ flexionValue }) => {
               <p className="text-gray-600 flex justify-between">
                 <span>Data</span>
                 <span className="font-medium">
-                  {startDate ? convertToItalianDate(startDate) : "N/A"}
+                  {startDate ? new Date(startDate).toLocaleDateString("it-IT") : "N/A"}
                 </span>
               </p>
               <p className="text-gray-600 flex justify-between">
@@ -83,23 +85,50 @@ const Report = ({ flexionValue }) => {
             </div>
           </div>
 
-          <div className="flex justify-between mt-6">
-            {/* Pulsante per tornare alla homepage */}
-            <button
-              className="flex items-center justify-center bg-blue-600 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              onClick={() => navigate("/")}
-            >
-              <FaHome className="mr-2" />
-              Torna alla Home
-            </button>
+          {/* Sezione Feedback */}
+          <div className="mt-8">
+            <h3 className="text-lg font-medium text-gray-800 mb-4">
+              Quanto dolore hai percepito durante l'esercizio?
+            </h3>
+            <div className="flex justify-around space-x-4">
+              {[
+                { emoji: "😄", label: "Nessun dolore", value: "Nessun dolore" },
+                { emoji: "😐", label: "Dolore moderato", value: "Dolore moderato" },
+                { emoji: "😢", label: "Molto dolore", value: "Molto dolore" }
+              ].map((feedback) => (
+                <div key={feedback.value} className="text-center">
+                  <button
+                    onClick={() => setSelectedFeedback(feedback.value)}
+                    className={`text-5xl p-4 rounded-lg transition-all duration-300 ${
+                      selectedFeedback === feedback.value
+                        ? "scale-110 bg-blue-100 text-blue-600 shadow-lg"
+                        : "hover:scale-105 hover:bg-blue-50 hover:text-blue-500"
+                    }`}
+                  >
+                    {feedback.emoji}
+                  </button>
+                  <p className="text-sm mt-2 text-gray-700">{feedback.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
 
-            {/* Pulsante per riprovare l'esercizio (torna alla pagina precedente) */}
+          {/* Pulsanti Azione */}
+          <div className="flex justify-between mt-8 space-x-4">
             <button
-              className="flex items-center justify-center bg-green-600 text-white py-2 px-4 rounded-lg shadow hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              className="w-1/2 flex items-center justify-center bg-green-600 text-white py-3 rounded-lg shadow hover:bg-green-700 focus:outline-none"
               onClick={() => navigate(-1)}
             >
               <FaRedoAlt className="mr-2" />
               Riprova
+            </button>
+
+            <button
+              className="w-1/2 flex items-center justify-center bg-blue-600 text-white py-3 rounded-lg shadow hover:bg-blue-700 focus:outline-none"
+              onClick={submitFeedback}
+            >
+              <FaHome className="mr-2" />
+              Invia Feedback e Torna alla Home
             </button>
           </div>
         </div>

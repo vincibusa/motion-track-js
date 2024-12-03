@@ -19,6 +19,9 @@ const REQUIRED_LANDMARKS = [
   POSE_LANDMARKS.LEFT_ANKLE,
 ];
 
+const EXTENSION_THRESHOLD = 170; // Angolo minimo per considerare l'estensione completa
+const FLEXION_THRESHOLD = 90; // Angolo massimo per considerare una flessione significativa
+
 const KneeFlexionLeft = () => {
 
   const videoRef = useRef(null);
@@ -37,6 +40,10 @@ const KneeFlexionLeft = () => {
   const [countdown, setCountdown] = useState(5); // Timer iniziale
   const [isCountdownActive, setIsCountdownActive] = useState(false); // 
   const [cameraPermissionGranted, setCameraPermissionGranted] = useState(false);
+    // Nuovi stati per il conteggio delle ripetizioni
+    const [validReps, setValidReps] = useState(0);
+    const [isExtended, setIsExtended] = useState(false);
+    const [isFlexed, setIsFlexed] = useState(false);
   // Update the trackingRef whenever tracking state changes
   useEffect(() => {
     trackingRef.current = isTracking;
@@ -59,51 +66,68 @@ const KneeFlexionLeft = () => {
   }, []);
 
   const calculateKneeAngle = (hip, knee, ankle) => {
-    // Vettori
     const hipToKnee = [knee[0] - hip[0], knee[1] - hip[1]];
     const kneeToAnkle = [ankle[0] - knee[0], ankle[1] - knee[1]];
-  
-    // Prodotto scalare e magnitudine
+    
     const dotProduct = hipToKnee[0] * kneeToAnkle[0] + hipToKnee[1] * kneeToAnkle[1];
     const magnitude1 = Math.sqrt(hipToKnee[0] ** 2 + hipToKnee[1] ** 2);
     const magnitude2 = Math.sqrt(kneeToAnkle[0] ** 2 + kneeToAnkle[1] ** 2);
-  
-    // Calcolare l'angolo in radianti
+    
     const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
     let angleRadians = Math.acos(cosAngle);
-  
-    // Convertire in gradi
+    
+    // Convertiamo in gradi
     let angleDegrees = (angleRadians * 180) / Math.PI;
-  
+    
+    // Calcoliamo l'angolo supplementare per ottenere l'angolo di estensione
+    angleDegrees = 180 - angleDegrees;
+    
     return angleDegrees;
   };
+
+// Inside validateRepetition to ensure states are correctly reset after each rep.
+const validateRepetition = (currentAngle) => {
+  console.log(`Current Angle: ${currentAngle}`);
+  console.log(`isExtended: ${isExtended}, isFlexed: ${isFlexed}`);
   
-  const checkKneeAlignment = (hip, knee, ankle) => {
-    // Verifica che i tre punti siano allineati sulla stessa perpendicolare
-    const tolerance = 10; // Tollerenza per la verifica di allineamento
-    const angle = calculateKneeAngle(hip, knee, ankle);
-    if (Math.abs(angle - 90) <= tolerance) {
-      return 'Posizione corretta (90°)';
-    } else if (Math.abs(angle - 180) <= tolerance) {
-      return 'Posizione errata (180°)';
+  if (currentAngle >= EXTENSION_THRESHOLD && !isExtended) {
+    console.log("Estensione rilevata!");
+    setIsExtended(true);
+    if (isFlexed) {
+      setValidReps((prev) => {
+        const newCount = prev + 1;
+        toast.success(`Ripetizione ${newCount} completata!`, {
+          position: "top-center",
+          autoClose: 1000,
+        });
+        return newCount;
+      });
+      setIsFlexed(false); // Reset flexed state after a full rep
     }
-    return 'Posizione fuori tolleranza';
-  };
+  } else if (currentAngle <= FLEXION_THRESHOLD && !isFlexed) {
+    console.log("Flessione rilevata!");
+    setIsFlexed(true);
+    setIsExtended(false); // Reset extended state after flexion
+  }
+};
+
+
   
   
+
   const onResults = useCallback(
     (results) => {
       if (!trackingRef.current) return;
-  
+
       const canvas = canvasRef.current;
       if (!canvas || !results.poseLandmarks) return;
-  
+
       const ctx = canvas.getContext('2d');
       const { width, height } = canvas;
       ctx.clearRect(0, 0, width, height);
-  
+
       const landmarks = results.poseLandmarks;
-  
+
       const leftHip = [
         landmarks[POSE_LANDMARKS.LEFT_HIP].x * width,
         landmarks[POSE_LANDMARKS.LEFT_HIP].y * height,
@@ -116,38 +140,24 @@ const KneeFlexionLeft = () => {
         landmarks[POSE_LANDMARKS.LEFT_ANKLE].x * width,
         landmarks[POSE_LANDMARKS.LEFT_ANKLE].y * height,
       ];
-  
-      // Calcola l'angolo del ginocchio
+
       const kneeAngle = calculateKneeAngle(leftHip, leftKnee, leftAnkle);
-      setAngle(kneeAngle); // Imposta l'angolo del ginocchio
-  
-      // Aggiorna maxFlexion se l'angolo è maggiore di maxFlexion
+      setAngle(kneeAngle);
+
+      // Valida la ripetizione con l'angolo corrente
+      validateRepetition(kneeAngle);
+
       setMaxFlexion((prevMax) => {
         const updatedMax = Math.max(prevMax, kneeAngle);
-        console.log(updatedMax); // Logga il valore aggiornato
         localStorage.setItem('maxFlexion', updatedMax.toString());
         return updatedMax;
       });
-  
-      // Verifica l'allineamento
-      const alignment = checkKneeAlignment(leftHip, leftKnee, leftAnkle);
-      if (alignment.includes('errata')) {
-        toast.error("Posizione errata! Allinea correttamente il ginocchio.", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-      }
-  
+
       drawLandmarks(landmarks, ctx, width, height);
     },
     []
   );
   
-
 
   const classifyKneeAngle = (angle) => {
     if (angle >= 0 && angle <= 60) return "Angolo insufficiente";
@@ -156,13 +166,11 @@ const KneeFlexionLeft = () => {
     if (angle > 150 && angle <= 180) return "Posizione perfetta";
     return "Posizione invalida";
   };
-  
 
   const drawLandmarks = (landmarks, ctx, width, height) => {
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 2;
 
-    // Draw connections
     ctx.beginPath();
     for (let i = 0; i < REQUIRED_LANDMARKS.length - 1; i++) {
       const start = landmarks[REQUIRED_LANDMARKS[i]];
@@ -175,7 +183,6 @@ const KneeFlexionLeft = () => {
     }
     ctx.stroke();
 
-    // Draw circles
     ctx.fillStyle = '#ADD8E6';
     REQUIRED_LANDMARKS.forEach((idx) => {
       const landmark = landmarks[idx];
@@ -186,6 +193,7 @@ const KneeFlexionLeft = () => {
       }
     });
   };
+
 
 
 
@@ -233,7 +241,7 @@ const KneeFlexionLeft = () => {
       if (poseRef.current) poseRef.current.close();
       poseRef.current = null; // Prevent any further calls
     };
-  }, [setupPose, isTracking]);
+  }, [ isTracking]);
 
   // Timer logic
 // Timer logic
@@ -311,47 +319,37 @@ useEffect(() => {
   
 
   return (
-    <div className="h-screen w-screen flex flex-col items-center justify-center bg-gray-900" 
-    ref={containerRef}
+    <div className="h-screen w-screen flex flex-col items-center justify-center bg-gray-900" ref={containerRef}>
+    <ToastContainer />
+    <button
+      className="absolute top-4 left-4 text-white bg-gray-700 p-2 rounded-full z-50"
+      onClick={() => navigate('/mobility-test')}
     >
-       <ToastContainer></ToastContainer>
-       {/* Back Button */}
-       <button
-        className="absolute top-4 left-4 text-white bg-gray-700 p-2 rounded-full z-50"
-        onClick={() => navigate('/mobility-test')}
-      >
-        <FaAngleLeft size={24} />
-      </button>
+      <FaAngleLeft size={24} />
+    </button>
 
-      {/* Timer */}
-      <div className="absolute top-4 right-4 text-white bg-gray-700 p-2 rounded-full flex items-center z-50">
-        <FaStopwatch size={20} className="mr-2" />
-        {timer}s
-      </div>
+    <div className="absolute top-4 right-4 text-white bg-gray-700 p-2 rounded-full flex items-center z-50">
+      <FaStopwatch size={20} className="mr-2" />
+      {timer}s
+    </div>
 
-      {/* Contenitore Video e Canvas */}
-      <div className="relative w-full h-full">
-        <video
-            style={{
-              transform: 'scaleX(-1)',
-            }}
-          ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover "
-          autoPlay
-          playsInline
-          muted
-        ></video>
-        <canvas
-           style={{
-              transform: 'scaleX(-1)',
-            }}
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full"
-        ></canvas>
-      </div>
+    <div className="relative w-full h-full">
+      <video
+        style={{ transform: 'scaleX(-1)' }}
+        ref={videoRef}
+        className="absolute inset-0 w-full h-full object-cover"
+        autoPlay
+        playsInline
+        muted
+      />
+      <canvas
+        style={{ transform: 'scaleX(-1)' }}
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full"
+      />
+    </div>
 
-      {/* Pulsante Centrale */}
-      <div className="absolute inset-0 flex items-center justify-center">
+    <div className="absolute inset-0 flex items-center justify-center">
       {!isTracking && !isCountdownActive && (
         <button
           onClick={handleStart}
@@ -361,36 +359,42 @@ useEffect(() => {
         </button>
       )}
 
-      {/* Timer che appare durante il conto alla rovescia */}
       {isCountdownActive && (
         <div className="absolute inset-0 flex items-center justify-center text-2xl text-white">
           Inizio in: {countdown} secondi
         </div>
       )}
-      </div>
-
-      {/* Controlli di Feedback in basso */}
-      <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center space-x-4 z-50">
-      {(isTracking ) && (
-              <div className="bg-gray-700 rounded-lg p-4">
-                <h3 className="text-white text-lg font-bold mb-3 flex items-center">
-                  <FaChartLine className="mr-2 text-yellow-400" />
-                  Riepilogo
-                </h3>
-                <div className="text-white space-y-2">
-                  <p className="flex justify-between">
-                    <span>Massima Flessione:</span>
-                    <span className="font-bold">{Math.round(maxFlexion)}°</span>
-                  </p>
-                  <p className="flex justify-between">
-                    <span>Classificazione:</span>
-                    <span className="font-bold">{classifyKneeAngle(maxFlexion)}</span>
-                  </p>
-                </div>
-              </div>
-            )}
-      </div>
     </div>
+
+    <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center space-x-4 z-50">
+      {isTracking && (
+        <div className="bg-gray-700 rounded-lg p-4">
+          <h3 className="text-white text-lg font-bold mb-3 flex items-center">
+            <FaChartLine className="mr-2 text-yellow-400" />
+            Riepilogo
+          </h3>
+          <div className="text-white space-y-2">
+            <p className="flex justify-between">
+              <span>Massima Flessione:</span>
+              <span className="font-bold">{Math.round(maxFlexion)}°</span>
+            </p>
+            <p className="flex justify-between">
+              <span>Classificazione:</span>
+              <span className="font-bold">{classifyKneeAngle(maxFlexion)}</span>
+            </p>
+            <p className="flex justify-between">
+              <span>Ripetizioni Valide:</span>
+              <span className="font-bold">{validReps}</span>
+            </p>
+            <p className="flex justify-between">
+              <span>Angolo Corrente:</span>
+              <span className="font-bold">{Math.round(angle)}°</span>
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
   );
 };
 
