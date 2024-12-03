@@ -25,15 +25,14 @@ const MobilitaTest = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-blue-300 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
-        <Link to="/">
             <motion.button
+            onClick={() => navigate(-1)} // Usa navigate(-1) per tornare indietro
             className="bg-transparent text-blue-600 hover:text-blue-800 text-lg font-semibold mb-6 focus:outline-none"
             initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
               &#8592; Torna indietro
             </motion.button>
-          </Link>
 
         {/* Titolo e sottotitolo migliorati */}
         <div className="text-center mb-12">
