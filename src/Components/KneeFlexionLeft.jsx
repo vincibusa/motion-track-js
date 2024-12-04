@@ -54,11 +54,10 @@ const KneeFlexionLeft = () => {
   const [cameraPermissionGranted, setCameraPermissionGranted] = useState(false);
     // Nuovi stati per il conteggio delle ripetizioni
     const [validReps, setValidReps] = useState(0);
-    const [isExtended, setIsExtended] = useState(false);
-    const [isFlexed, setIsFlexed] = useState(false);
-    const [currentStage, setCurrentStage] = useState(null);
+    const [invalidReps, setInvalidReps] = useState(0); // Nuovo stato per le ripetizioni errate
+    const [totalReps, setTotalReps] = useState(0); // Nuovo stato per il totale
     const [stageSequence, setStageSequence] = useState([]);
-    const [isValidatingRep, setIsValidatingRep] = useState(false);
+    const [currentStage, setCurrentStage] = useState(null);
   // Update the trackingRef whenever tracking state changes
   useEffect(() => {
     trackingRef.current = isTracking;
@@ -114,29 +113,23 @@ const determineStage = (angle) => {
 };
 
 const validateStageSequence = (sequence) => {
-  // Sequenza corretta: S1 -> S2 -> S3 -> S2 -> S1
   const correctSequence = [
     STAGES.STAGE1,
     STAGES.STAGE2,
     STAGES.STAGE3,
     STAGES.STAGE2,
-    STAGES.STAGE1
+    STAGES.STAGE1,
   ];
-
   if (sequence.length !== correctSequence.length) return false;
 
-  for (let i = 0; i < correctSequence.length; i++) {
-    if (sequence[i] !== correctSequence[i]) return false;
-  }
-
-  return true;
+  return sequence.every((stage, index) => stage === correctSequence[index]);
 };
 
 const validateRepetition = (currentAngle) => {
   const newStage = determineStage(currentAngle);
-  
+
   if (!newStage) {
-    // Angolo fuori da qualsiasi stage, resettiamo la sequenza
+    // Resetta la sequenza se l'angolo è fuori range
     if (stageSequence.length > 0) {
       setStageSequence([]);
       console.log("Sequenza resettata - angolo fuori range");
@@ -148,39 +141,60 @@ const validateRepetition = (currentAngle) => {
     console.log(`Nuovo stage rilevato: ${newStage}`);
     setCurrentStage(newStage);
 
-    // Aggiungiamo il nuovo stage alla sequenza solo se è diverso dall'ultimo
-    setStageSequence(prev => {
-      if (prev.length === 0 || prev[prev.length - 1] !== newStage) {
-        const newSequence = [...prev, newStage];
-        console.log("Sequenza attuale:", newSequence);
-
-        // Verifichiamo se abbiamo completato una rep valida
-        if (validateStageSequence(newSequence)) {
-          console.log("Ripetizione valida completata!");
-          setValidReps(prevReps => {
-            const newCount = prevReps + 1;
-            toast.success(`Ripetizione ${newCount} completata!`, {
-              position: "top-center",
-              autoClose: 1000,
-            });
-            return newCount;
-          });
-          return []; // Resettiamo la sequenza dopo una rep valida
-        }
-
-        // Se la sequenza diventa troppo lunga senza essere valida, la resettiamo
-        if (newSequence.length > 5) {
-          console.log("Sequenza troppo lunga - reset");
-          return [];
-        }
-
-        return newSequence;
+    setStageSequence((prev) => {
+      // Aggiungi lo stage solo se è diverso dall'ultimo
+      if (prev[prev.length - 1] === newStage) {
+        return prev;
       }
-      return prev;
+
+      const newSequence = [...prev, newStage];
+
+      console.log("Sequenza attuale:", newSequence);
+
+      if (validateStageSequence(newSequence)) {
+        // Ripetizione valida
+        console.log("Ripetizione valida completata!");
+        setValidReps((prevReps) => prevReps + 1);
+        setTotalReps((prevTotal) => prevTotal + 1);
+        toast.success(`Ripetizione valida!`, {
+          position: "top-center",
+          autoClose: 1000,
+        });
+        return []; // Resetta la sequenza dopo una ripetizione valida
+      } else if (newSequence.length === 5) {
+        // Sequenza di 5 stage non valida (ripetizione errata)
+        console.log("Ripetizione errata completata!");
+        setInvalidReps((prevReps) => prevReps + 1);
+        setTotalReps((prevTotal) => prevTotal + 1);
+        toast.error(`Ripetizione errata!`, {
+          position: "top-center",
+          autoClose: 1000,
+        });
+        return []; // Resetta la sequenza
+      } else if (
+        newSequence.length < 5 &&
+        newStage === STAGES.STAGE1 &&
+        prev[prev.length - 1] === STAGES.STAGE2 // Controlla che sia una sequenza incompleta
+      ) {
+        console.log("Sequenza incompleta terminata in STAGE1!");
+        toast.error(`Ripetizione non valida, stendi meglio il ginocchio`, {
+          position: "top-center",
+          autoClose: 1000,
+        });
+        setInvalidReps((prevReps) => prevReps + 1);
+        setTotalReps((prevTotal) => prevTotal + 1);
+        return [];
+      } else if (newSequence.length > 5) {
+        // Resetta sequenze troppo lunghe
+        console.log("Sequenza troppo lunga - reset");
+        return [];
+      }
+
+      return newSequence;
     });
   }
 };
-  
+
   
 
   const onResults = useCallback(
@@ -318,31 +332,31 @@ const validateRepetition = (currentAngle) => {
 
   // Timer logic
 // Timer logic
-useEffect(() => {
-  let interval;
-  if (isTracking) {
-    interval = setInterval(() => {
-      setTimer((prev) => {
-        if (prev >= 10) {
+// useEffect(() => {
+//   let interval;
+//   if (isTracking) {
+//     interval = setInterval(() => {
+//       setTimer((prev) => {
+//         if (prev >= 10) {
          
     
           
-          setIsTracking(false); // Ferma il tracking quando il timer raggiunge 10
+//           setIsTracking(false); // Ferma il tracking quando il timer raggiunge 10
           
         
-          setTimeout(() => {
-            navigate('/report'); // Naviga alla pagina report dopo il ritardo
-          }, 500); // Ritardo di 2000ms (2 secondi)
-          return prev;
-        }
-        return prev + 1;
-      });
-      setAngle((prev) => prev + Math.random() * 5 - 2.5); // Cambia l'angolo a caso
-    }, 1000);
-  }
+//           setTimeout(() => {
+//             navigate('/report'); // Naviga alla pagina report dopo il ritardo
+//           }, 500); // Ritardo di 2000ms (2 secondi)
+//           return prev;
+//         }
+//         return prev + 1;
+//       });
+//       setAngle((prev) => prev + Math.random() * 5 - 2.5); // Cambia l'angolo a caso
+//     }, 1000);
+//   }
 
-  return () => clearInterval(interval); // Pulisci l'intervallo quando il componente viene smontato
-}, [isTracking, navigate]);
+//   return () => clearInterval(interval); // Pulisci l'intervallo quando il componente viene smontato
+// }, [isTracking, navigate]);
 
 
   const requestFullscreen = () => {
@@ -466,6 +480,10 @@ useEffect(() => {
             <p className="flex justify-between">
               <span>Ripetizioni Valide:</span>
               <span className="font-bold">{validReps}</span>
+            </p>
+            <p className="flex justify-between">
+              <span>Ripetizioni Totali:</span>
+              <span className="font-bold">{totalReps}</span>
             </p>
             <p className="flex justify-between">
               <span>Angolo Corrente:</span>
