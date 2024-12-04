@@ -195,7 +195,19 @@ const validateRepetition = (currentAngle) => {
   }
 };
 
-  
+useEffect(() => {
+  if (totalReps >= 10) {
+    setIsTracking(false);
+    toast.info("Hai completato 10 ripetizioni!", {
+      position: "top-center",
+      autoClose: 2000,
+    });
+       setTimeout(() => {
+                  navigate('/report'); // Naviga alla pagina report dopo il ritardo
+                }, 500); // Ritardo di 2000ms (2 secondi)
+  }
+}, [totalReps, navigate]);
+
 
   const onResults = useCallback(
     (results) => {
