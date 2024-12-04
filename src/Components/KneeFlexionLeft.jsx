@@ -19,6 +19,18 @@ const REQUIRED_LANDMARKS = [
   POSE_LANDMARKS.LEFT_ANKLE,
 ];
 
+const STAGES = {
+  STAGE1: 'STAGE1', // 90-120 gradi
+  STAGE2: 'STAGE2', // 120-155 gradi
+  STAGE3: 'STAGE3', // 155-180 gradi
+};
+
+const STAGE_RANGES = {
+  [STAGES.STAGE1]: { min: 90, max: 120 },
+  [STAGES.STAGE2]: { min: 120, max: 155 },
+  [STAGES.STAGE3]: { min: 155, max: 180 },
+};
+
 const EXTENSION_THRESHOLD = 170; // Angolo minimo per considerare l'estensione completa
 const FLEXION_THRESHOLD = 90; // Angolo massimo per considerare una flessione significativa
 
@@ -44,6 +56,9 @@ const KneeFlexionLeft = () => {
     const [validReps, setValidReps] = useState(0);
     const [isExtended, setIsExtended] = useState(false);
     const [isFlexed, setIsFlexed] = useState(false);
+    const [currentStage, setCurrentStage] = useState(null);
+    const [stageSequence, setStageSequence] = useState([]);
+    const [isValidatingRep, setIsValidatingRep] = useState(false);
   // Update the trackingRef whenever tracking state changes
   useEffect(() => {
     trackingRef.current = isTracking;
@@ -85,34 +100,86 @@ const KneeFlexionLeft = () => {
     return angleDegrees;
   };
 
-// Inside validateRepetition to ensure states are correctly reset after each rep.
-const validateRepetition = (currentAngle) => {
-  console.log(`Current Angle: ${currentAngle}`);
-  console.log(`isExtended: ${isExtended}, isFlexed: ${isFlexed}`);
-  
-  if (currentAngle >= EXTENSION_THRESHOLD && !isExtended) {
-    console.log("Estensione rilevata!");
-    setIsExtended(true);
-    if (isFlexed) {
-      setValidReps((prev) => {
-        const newCount = prev + 1;
-        toast.success(`Ripetizione ${newCount} completata!`, {
-          position: "top-center",
-          autoClose: 1000,
-        });
-        return newCount;
-      });
-      setIsFlexed(false); // Reset flexed state after a full rep
-    }
-  } else if (currentAngle <= FLEXION_THRESHOLD && !isFlexed) {
-    console.log("Flessione rilevata!");
-    setIsFlexed(true);
-    setIsExtended(false); // Reset extended state after flexion
+
+
+const determineStage = (angle) => {
+  if (angle >= STAGE_RANGES.STAGE1.min && angle < STAGE_RANGES.STAGE1.max) {
+    return STAGES.STAGE1;
+  } else if (angle >= STAGE_RANGES.STAGE2.min && angle < STAGE_RANGES.STAGE2.max) {
+    return STAGES.STAGE2;
+  } else if (angle >= STAGE_RANGES.STAGE3.min && angle <= STAGE_RANGES.STAGE3.max) {
+    return STAGES.STAGE3;
   }
+  return null;
 };
 
+const validateStageSequence = (sequence) => {
+  // Sequenza corretta: S1 -> S2 -> S3 -> S2 -> S1
+  const correctSequence = [
+    STAGES.STAGE1,
+    STAGES.STAGE2,
+    STAGES.STAGE3,
+    STAGES.STAGE2,
+    STAGES.STAGE1
+  ];
 
+  if (sequence.length !== correctSequence.length) return false;
 
+  for (let i = 0; i < correctSequence.length; i++) {
+    if (sequence[i] !== correctSequence[i]) return false;
+  }
+
+  return true;
+};
+
+const validateRepetition = (currentAngle) => {
+  const newStage = determineStage(currentAngle);
+  
+  if (!newStage) {
+    // Angolo fuori da qualsiasi stage, resettiamo la sequenza
+    if (stageSequence.length > 0) {
+      setStageSequence([]);
+      console.log("Sequenza resettata - angolo fuori range");
+    }
+    return;
+  }
+
+  if (newStage !== currentStage) {
+    console.log(`Nuovo stage rilevato: ${newStage}`);
+    setCurrentStage(newStage);
+
+    // Aggiungiamo il nuovo stage alla sequenza solo se è diverso dall'ultimo
+    setStageSequence(prev => {
+      if (prev.length === 0 || prev[prev.length - 1] !== newStage) {
+        const newSequence = [...prev, newStage];
+        console.log("Sequenza attuale:", newSequence);
+
+        // Verifichiamo se abbiamo completato una rep valida
+        if (validateStageSequence(newSequence)) {
+          console.log("Ripetizione valida completata!");
+          setValidReps(prevReps => {
+            const newCount = prevReps + 1;
+            toast.success(`Ripetizione ${newCount} completata!`, {
+              position: "top-center",
+              autoClose: 1000,
+            });
+            return newCount;
+          });
+          return []; // Resettiamo la sequenza dopo una rep valida
+        }
+
+        // Se la sequenza diventa troppo lunga senza essere valida, la resettiamo
+        if (newSequence.length > 5) {
+          console.log("Sequenza troppo lunga - reset");
+          return [];
+        }
+
+        return newSequence;
+      }
+      return prev;
+    });
+  }
+};
   
   
 
@@ -159,6 +226,11 @@ const validateRepetition = (currentAngle) => {
     []
   );
   
+  const getCurrentStageDisplay = () => {
+    if (!currentStage) return "Fuori Range";
+    return `Stage ${currentStage.slice(-1)}`;
+  };
+
 
   const classifyKneeAngle = (angle) => {
     if (angle >= 0 && angle <= 60) return "Angolo insufficiente";
@@ -383,6 +455,14 @@ useEffect(() => {
               <span>Classificazione:</span>
               <span className="font-bold">{classifyKneeAngle(maxFlexion)}</span>
             </p>
+            <p className="flex justify-between">
+        <span>Stage Corrente:</span>
+        <span className="font-bold">{getCurrentStageDisplay()}</span>
+      </p>
+      <p className="flex justify-between">
+        <span>Progresso Sequenza:</span>
+        <span className="font-bold">{stageSequence.length}/5</span>
+      </p>
             <p className="flex justify-between">
               <span>Ripetizioni Valide:</span>
               <span className="font-bold">{validReps}</span>
