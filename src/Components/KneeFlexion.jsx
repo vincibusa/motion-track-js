@@ -1,28 +1,25 @@
-
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import * as MediapipePose from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
 import '@mediapipe/pose/pose';
-import { FaStopwatch, FaChartLine, FaAngleLeft,  } from "react-icons/fa";
+import {  FaAngleLeft } from "react-icons/fa";
 import { BsPlayCircleFill } from 'react-icons/bs';
-import { useNavigate } from 'react-router-dom';  // Importa useNavigate
+import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
+
 const POSE_LANDMARKS = {
-    LEFT_HIP: 23,
-    LEFT_KNEE: 25, // Ginocchio sinistro
-    LEFT_ANKLE: 27, // Caviglia sinistra
-  };
-  
-const REQUIRED_LANDMARKS = [
-  POSE_LANDMARKS.LEFT_HIP,
-  POSE_LANDMARKS.LEFT_KNEE,
-  POSE_LANDMARKS.LEFT_ANKLE,
-];
+  LEFT_HIP: 23,
+  LEFT_KNEE: 25,
+  LEFT_ANKLE: 27,
+  RIGHT_HIP: 24,
+  RIGHT_KNEE: 26,
+  RIGHT_ANKLE: 28,
+};
 
 const STAGES = {
-  STAGE1: 'STAGE1', // 90-120 gradi
-  STAGE2: 'STAGE2', // 120-155 gradi
-  STAGE3: 'STAGE3', // 155-180 gradi
+  STAGE1: 'STAGE1',
+  STAGE2: 'STAGE2',
+  STAGE3: 'STAGE3',
 };
 
 const STAGE_RANGES = {
@@ -31,37 +28,44 @@ const STAGE_RANGES = {
   [STAGES.STAGE3]: { min: 155, max: 180 },
 };
 
-const EXTENSION_THRESHOLD = 170; // Angolo minimo per considerare l'estensione completa
-const FLEXION_THRESHOLD = 90; // Angolo massimo per considerare una flessione significativa
+const EXTENSION_THRESHOLD = 170;
+const FLEXION_THRESHOLD = 90;
 
-const KneeFlexionLeft = () => {
+const KneeFlexion = ({ side = 'left' }) => {
+  const getLandmarks = () => {
+    if (side === 'left') {
+      return [POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_KNEE, POSE_LANDMARKS.LEFT_ANKLE];
+    }
+    return [POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_KNEE, POSE_LANDMARKS.RIGHT_ANKLE];
+  };
+
+  const REQUIRED_LANDMARKS = getLandmarks();
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const cameraRef = useRef(null); // Ref for the Camera
+  const cameraRef = useRef(null);
   const containerRef = useRef(null);
   const poseRef = useRef(null);
-  const trackingRef = useRef(false); // Ref to keep track of the current tracking state
+  const trackingRef = useRef(false);
 
-  const navigate = useNavigate();  // Inizializza navigate
+  const navigate = useNavigate();
   const [angle, setAngle] = useState(0);
   const [maxFlexion, setMaxFlexion] = useState(0);
   const [timer, setTimer] = useState(0);
   const [isTracking, setIsTracking] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
-  const [countdown, setCountdown] = useState(5); // Timer iniziale
-  const [isCountdownActive, setIsCountdownActive] = useState(false); // 
+  const [countdown, setCountdown] = useState(5);
+  const [isCountdownActive, setIsCountdownActive] = useState(false);
   const [cameraPermissionGranted, setCameraPermissionGranted] = useState(false);
-    // Nuovi stati per il conteggio delle ripetizioni
-    const [validReps, setValidReps] = useState(0);
-    const [invalidReps, setInvalidReps] = useState(0); // Nuovo stato per le ripetizioni errate
-    const [totalReps, setTotalReps] = useState(0); // Nuovo stato per il totale
-    const [stageSequence, setStageSequence] = useState([]);
-    const [currentStage, setCurrentStage] = useState(null);
-    const [target, setTarget]=useState("");
-    const [targetReps, setTargetReps] = useState(10); // Default to 10
-const [showStartButton, setShowStartButton] = useState(false);
-  // Update the trackingRef whenever tracking state changes
+  const [validReps, setValidReps] = useState(0);
+  const [invalidReps, setInvalidReps] = useState(0);
+  const [totalReps, setTotalReps] = useState(0);
+  const [stageSequence, setStageSequence] = useState([]);
+  const [currentStage, setCurrentStage] = useState(null);
+  const [target, setTarget] = useState("");
+  const [targetReps, setTargetReps] = useState(10);
+  const [showStartButton, setShowStartButton] = useState(false);
+
   useEffect(() => {
     trackingRef.current = isTracking;
   }, [isTracking]);
@@ -69,8 +73,8 @@ const [showStartButton, setShowStartButton] = useState(false);
   const requestCameraPermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      setCameraPermissionGranted(true); // Permesso concesso
-      stream.getTracks().forEach(track => track.stop()); // Ferma il flusso per ora
+      setCameraPermissionGranted(true);
+      stream.getTracks().forEach(track => track.stop());
     } catch (error) {
       alert('Per favore, consenti l\'accesso alla fotocamera per utilizzare questa funzione.');
       setCameraPermissionGranted(false);
@@ -78,7 +82,6 @@ const [showStartButton, setShowStartButton] = useState(false);
   };
 
   useEffect(() => {
-    // Richiedi il permesso per la fotocamera al caricamento del componente
     requestCameraPermission();
   }, []);
 
@@ -92,128 +95,107 @@ const [showStartButton, setShowStartButton] = useState(false);
     
     const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
     let angleRadians = Math.acos(cosAngle);
-    
-    // Convertiamo in gradi
     let angleDegrees = (angleRadians * 180) / Math.PI;
-    
-    // Calcoliamo l'angolo supplementare per ottenere l'angolo di estensione
     angleDegrees = 180 - angleDegrees;
     
     return angleDegrees;
   };
 
-
-
-const determineStage = (angle) => {
-  if (angle >= STAGE_RANGES.STAGE1.min && angle < STAGE_RANGES.STAGE1.max) {
-    return STAGES.STAGE1;
-  } else if (angle >= STAGE_RANGES.STAGE2.min && angle < STAGE_RANGES.STAGE2.max) {
-    return STAGES.STAGE2;
-  } else if (angle >= STAGE_RANGES.STAGE3.min && angle <= STAGE_RANGES.STAGE3.max) {
-    return STAGES.STAGE3;
-  }
-  return null;
-};
-
-const validateStageSequence = (sequence) => {
-  const correctSequence = [
-    STAGES.STAGE1,
-    STAGES.STAGE2,
-    STAGES.STAGE3,
-    STAGES.STAGE2,
-    STAGES.STAGE1,
-  ];
-  if (sequence.length !== correctSequence.length) return false;
-
-  return sequence.every((stage, index) => stage === correctSequence[index]);
-};
-
-const validateRepetition = (currentAngle) => {
-  const newStage = determineStage(currentAngle);
-
-  if (!newStage) {
-    // Resetta la sequenza se l'angolo è fuori range
-    if (stageSequence.length > 0) {
-      setStageSequence([]);
-      console.log("Sequenza resettata - angolo fuori range");
+  const determineStage = (angle) => {
+    if (angle >= STAGE_RANGES.STAGE1.min && angle < STAGE_RANGES.STAGE1.max) {
+      return STAGES.STAGE1;
+    } else if (angle >= STAGE_RANGES.STAGE2.min && angle < STAGE_RANGES.STAGE2.max) {
+      return STAGES.STAGE2;
+    } else if (angle >= STAGE_RANGES.STAGE3.min && angle <= STAGE_RANGES.STAGE3.max) {
+      return STAGES.STAGE3;
     }
-    return;
-  }
+    return null;
+  };
 
-  if (newStage !== currentStage) {
-    console.log(`Nuovo stage rilevato: ${newStage}`);
-    setCurrentStage(newStage);
+  const validateStageSequence = (sequence) => {
+    const correctSequence = [
+      STAGES.STAGE1,
+      STAGES.STAGE2,
+      STAGES.STAGE3,
+      STAGES.STAGE2,
+      STAGES.STAGE1,
+    ];
+    if (sequence.length !== correctSequence.length) return false;
+    return sequence.every((stage, index) => stage === correctSequence[index]);
+  };
 
-    setStageSequence((prev) => {
-      // Aggiungi lo stage solo se è diverso dall'ultimo
-      if (prev[prev.length - 1] === newStage) {
-        return prev;
+  const validateRepetition = (currentAngle) => {
+    const newStage = determineStage(currentAngle);
+
+    if (!newStage) {
+      if (stageSequence.length > 0) {
+        setStageSequence([]);
       }
+      return;
+    }
 
-      const newSequence = [...prev, newStage];
+    if (newStage !== currentStage) {
+      setCurrentStage(newStage);
 
-      console.log("Sequenza attuale:", newSequence);
+      setStageSequence((prev) => {
+        if (prev[prev.length - 1] === newStage) {
+          return prev;
+        }
 
-      if (validateStageSequence(newSequence)) {
-        // Ripetizione valida
-        console.log("Ripetizione valida completata!");
-        setValidReps((prevReps) => prevReps + 1);
-        setTotalReps((prevTotal) => prevTotal + 1);
-        toast.success(`Ripetizione valida!`, {
-          position: "top-center",
-          autoClose: 1000,
-        });
-        return []; // Resetta la sequenza dopo una ripetizione valida
-      } else if (newSequence.length === 5) {
-        // Sequenza di 5 stage non valida (ripetizione errata)
-        console.log("Ripetizione errata completata!");
-        setInvalidReps((prevReps) => prevReps + 1);
-        setTotalReps((prevTotal) => prevTotal + 1);
-        toast.error(`Ripetizione errata!`, {
-          position: "top-center",
-          autoClose: 1000,
-        });
-        return []; // Resetta la sequenza
-      } else if (
-        newSequence.length < 5 &&
-        newStage === STAGES.STAGE1 &&
-        prev[prev.length - 1] === STAGES.STAGE2 // Controlla che sia una sequenza incompleta
-      ) {
-        console.log("Sequenza incompleta terminata in STAGE1!");
-        toast.error(`Ripetizione non valida, stendi meglio il ginocchio`, {
-          position: "top-center",
-          autoClose: 1000,
-        });
-        setInvalidReps((prevReps) => prevReps + 1);
-        setTotalReps((prevTotal) => prevTotal + 1);
-        return [];
-      } else if (newSequence.length > 5) {
-        // Resetta sequenze troppo lunghe
-        console.log("Sequenza troppo lunga - reset");
-        return [];
-      }
+        const newSequence = [...prev, newStage];
 
-      return newSequence;
-    });
-  }
-};
+        if (validateStageSequence(newSequence)) {
+          setValidReps((prevReps) => prevReps + 1);
+          setTotalReps((prevTotal) => prevTotal + 1);
+          toast.success(`Ripetizione valida!`, {
+            position: "top-center",
+            autoClose: 1000,
+          });
+          return [];
+        } else if (newSequence.length === 5) {
+          setInvalidReps((prevReps) => prevReps + 1);
+          setTotalReps((prevTotal) => prevTotal + 1);
+          toast.error(`Ripetizione errata!`, {
+            position: "top-center",
+            autoClose: 1000,
+          });
+          return [];
+        } else if (
+          newSequence.length < 5 &&
+          newStage === STAGES.STAGE1 &&
+          prev[prev.length - 1] === STAGES.STAGE2
+        ) {
+          toast.error(`Ripetizione non valida, stendi meglio il ginocchio`, {
+            position: "top-center",
+            autoClose: 1000,
+          });
+          setInvalidReps((prevReps) => prevReps + 1);
+          setTotalReps((prevTotal) => prevTotal + 1);
+          return [];
+        } else if (newSequence.length > 5) {
+          return [];
+        }
 
-useEffect(() => {
-  if (totalReps >= targetReps) {
-    setIsTracking(false);
-    toast.info(`Hai completato ${targetReps} ripetizioni!`, {
-      position: "top-center",
-      autoClose: 2000,
-    });
-    localStorage.setItem('totalReps', totalReps.toString());
-    localStorage.setItem('validReps', validReps.toString());
-    localStorage.setItem('invalidReps', invalidReps.toString());
-    setTimeout(() => {
-      navigate('/report-exercise');
-    }, 500);
-  }
-}, [totalReps, targetReps, validReps, invalidReps, navigate]);
+        return newSequence;
+      });
+    }
+  };
 
+  useEffect(() => {
+    if (totalReps >= targetReps) {
+      setIsTracking(false);
+      toast.info(`Hai completato ${targetReps} ripetizioni!`, {
+        position: "top-center",
+        autoClose: 2000,
+      });
+      localStorage.setItem('totalReps', totalReps.toString());
+      localStorage.setItem('validReps', validReps.toString());
+      localStorage.setItem('invalidReps', invalidReps.toString());
+      setTimeout(() => {
+        navigate('/report-exercise');
+      }, 500);
+    }
+  }, [totalReps, targetReps, validReps, invalidReps, navigate]);
 
   const onResults = useCallback(
     (results) => {
@@ -228,23 +210,22 @@ useEffect(() => {
 
       const landmarks = results.poseLandmarks;
 
-      const leftHip = [
-        landmarks[POSE_LANDMARKS.LEFT_HIP].x * width,
-        landmarks[POSE_LANDMARKS.LEFT_HIP].y * height,
+      const [hipIndex, kneeIndex, ankleIndex] = REQUIRED_LANDMARKS;
+      const hip = [
+        landmarks[hipIndex].x * width,
+        landmarks[hipIndex].y * height,
       ];
-      const leftKnee = [
-        landmarks[POSE_LANDMARKS.LEFT_KNEE].x * width,
-        landmarks[POSE_LANDMARKS.LEFT_KNEE].y * height,
+      const knee = [
+        landmarks[kneeIndex].x * width,
+        landmarks[kneeIndex].y * height,
       ];
-      const leftAnkle = [
-        landmarks[POSE_LANDMARKS.LEFT_ANKLE].x * width,
-        landmarks[POSE_LANDMARKS.LEFT_ANKLE].y * height,
+      const ankle = [
+        landmarks[ankleIndex].x * width,
+        landmarks[ankleIndex].y * height,
       ];
 
-      const kneeAngle = calculateKneeAngle(leftHip, leftKnee, leftAnkle);
+      const kneeAngle = calculateKneeAngle(hip, knee, ankle);
       setAngle(kneeAngle);
-
-      // Valida la ripetizione con l'angolo corrente
       validateRepetition(kneeAngle);
 
       setMaxFlexion((prevMax) => {
@@ -257,20 +238,6 @@ useEffect(() => {
     },
     []
   );
-  
-  const getCurrentStageDisplay = () => {
-    if (!currentStage) return "Fuori Range";
-    return `Stage ${currentStage.slice(-1)}`;
-  };
-
-
-  const classifyKneeAngle = (angle) => {
-    if (angle >= 0 && angle <= 60) return "Angolo insufficiente";
-    if (angle > 60 && angle <= 120) return "Angolo adeguato";
-    if (angle > 120 && angle <= 150) return "Buona posizione";
-    if (angle > 150 && angle <= 180) return "Posizione perfetta";
-    return "Posizione invalida";
-  };
 
   const drawLandmarks = (landmarks, ctx, width, height) => {
     ctx.strokeStyle = 'white';
@@ -298,9 +265,6 @@ useEffect(() => {
       }
     });
   };
-
-
-
 
   const setupPose = useCallback(() => {
     const video = videoRef.current;
@@ -344,36 +308,33 @@ useEffect(() => {
     return () => {
       if (cameraRef.current) cameraRef.current.stop();
       if (poseRef.current) poseRef.current.close();
-      poseRef.current = null; // Prevent any further calls
+      poseRef.current = null;
     };
-  }, [ isTracking]);
+  }, [isTracking, setupPose]);
 
   const requestFullscreen = () => {
     const container = containerRef.current;
     if (container && container.requestFullscreen) {
       container.requestFullscreen();
     } else if (container && container.webkitRequestFullscreen) {
-      container.webkitRequestFullscreen(); // Per Safari
+      container.webkitRequestFullscreen();
     } else if (container && container.mozRequestFullScreen) {
-      container.mozRequestFullScreen(); // Per Firefox
+      container.mozRequestFullScreen();
     } else if (container && container.msRequestFullscreen) {
-      container.msRequestFullscreen(); // Per IE/Edge
+      container.msRequestFullscreen();
     }
   };
 
   const handleStart = async () => {
     if (!cameraPermissionGranted) {
-      // Se i permessi non sono stati concessi, richiedili
       await requestCameraPermission();
       
-      // Se dopo la richiesta i permessi non sono ancora concessi, mostra un messaggio
       if (!cameraPermissionGranted) {
         alert('Non hai i permessi per utilizzare la fotocamera. Per favore, consenti l\'accesso.');
         return;
       }
     }
-    requestFullscreen()
-    // Procedi con il countdown solo se i permessi sono concessi
+    requestFullscreen();
     setIsCountdownActive(true);
     let seconds = 5;
   
@@ -388,11 +349,9 @@ useEffect(() => {
         localStorage.setItem('startDate', today);
         setHasStarted(true);
         setIsTracking(true);
-       
       }
     }, 1000);
   };
-  
 
   return (
     <div className="h-screen w-screen flex flex-col items-center justify-center bg-gray-900" ref={containerRef}>
@@ -467,7 +426,8 @@ useEffect(() => {
 
 
   </div>
-  );
-};
 
-export default KneeFlexionLeft;
+    );
+}
+
+export default KneeFlexion;

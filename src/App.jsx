@@ -12,6 +12,8 @@ import Report from "./Components/Report";
 import KneeFlexionLeft from "./Components/KneeFlexionLeft";
 import KneeFlexionRight from "./Components/KneeFlexionRight";
 import StrengthEvaluation from "./Pages/StrengthEvaluation";
+import ReportExercise from "./Components/ReportExercise";
+import KneeFlexion from "./Components/KneeFlexion";
 function App() {
   return (
     <Router>
@@ -22,9 +24,10 @@ function App() {
         <Route path="/strength-evaluation" element={<StrengthEvaluation/>} />
         <Route path="/shoulder-right" element={<ShoulderFlexionRight />} />
         <Route path="/shoulder-left" element={<ShoulderFlexionLeft />} />
-        <Route path="/knee-left" element={<KneeFlexionLeft/>}/>
-        <Route path="/knee-right" element={<KneeFlexionRight/>}/>
+        <Route path="/knee-left" element={<KneeFlexion side="left"/>}/>
+        <Route path="/knee-right" element={<KneeFlexion side="right"/>}/>
         <Route path="/report" element={<Report/>}/>
+        <Route path="/report-exercise" element={<ReportExercise/>}/>
       </Routes>
     </Router>
   );

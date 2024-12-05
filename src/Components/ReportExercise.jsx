@@ -8,6 +8,22 @@ const ReportExercise = ({ flexionValue }) => {
   const [selectedFeedback, setSelectedFeedback] = useState(null); // Stato per il feedback selezionato
   const startDate = localStorage.getItem("startDate");
   const navigate = useNavigate();
+  const totalReps = localStorage.getItem("totalReps");
+  const validReps = localStorage.getItem("validReps");
+  const invalidReps = localStorage.getItem("invalidReps");
+  const [textFeedback, setTextFeedback] = useState('');
+
+  const submitFeedback = async () => {
+    if (!selectedFeedback) return alert("Per favore, seleziona un feedback.");
+  
+    console.log("Feedback inviato:", {
+      painLevel: selectedFeedback,
+      comments: textFeedback
+    });
+  
+    navigate("/");
+  };
+  
 
   useEffect(() => {
     const savedMaxFlexion = localStorage.getItem("maxFlexion");
@@ -22,30 +38,12 @@ const ReportExercise = ({ flexionValue }) => {
     return () => clearTimeout(timer);
   }, [flexionValue]);
 
-  const classifyFlexion = (angle) => {
-    if (angle >= 0 && angle <= 100) return "Scarsa mobilità";
-    if (angle >= 101 && angle <= 130) return "Discreta";
-    if (angle >= 150 && angle <= 170) return "Buona";
-    if (angle > 170 && angle <= 180) return "Ottima";
-    return "Invalido";
-  };
-
-  const submitFeedback = async () => {
-    if (!selectedFeedback) return alert("Per favore, seleziona un feedback.");
-
-    // Simulazione dell'invio del dato al database
-    console.log("Feedback inviato:", selectedFeedback);
-
-    // Reindirizzamento alla homepage dopo l'invio del feedback
-    navigate("/");
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-blue-300 p-6 flex items-center justify-center">
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md transition-all duration-300 transform hover:shadow-xl">
         <div className="text-center space-y-6">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-            Report di Flessione della Spalla
+            Report di Flessione del Ginocchio
           </h2>
 
           <div
@@ -55,10 +53,10 @@ const ReportExercise = ({ flexionValue }) => {
           >
             <div className="flex items-center justify-center">
               <span className="text-5xl font-bold text-blue-800">
-                {Math.round(maxFlexion)}°
+                {totalReps}
               </span>
             </div>
-            <p className="text-gray-600 mt-2">Massima flessione raggiunta</p>
+            <p className="text-gray-600 mt-2">Numero totali di ripetizioni</p>
           </div>
 
           <div className="bg-gray-200 rounded-lg p-4 mt-6">
@@ -73,13 +71,13 @@ const ReportExercise = ({ flexionValue }) => {
                 </span>
               </p>
               <p className="text-gray-600 flex justify-between">
-                <span>Durata</span>
-                <span className="font-medium">10 secondi</span>
+                <span>Ripetizioni valide</span>
+                <span className="font-medium text-green-700">{validReps}</span>
               </p>
               <p className="text-gray-600 flex justify-between">
-                <span>Classificazione</span>
-                <span className="font-medium text-blue-700">
-                  {classifyFlexion(maxFlexion)}
+                <span>Ripetizioni non valide</span>
+                <span className="font-medium text-red-700">
+                  {invalidReps}
                 </span>
               </p>
             </div>
@@ -111,6 +109,21 @@ const ReportExercise = ({ flexionValue }) => {
                 </div>
               ))}
             </div>
+            <div className="mt-6">
+  <h3 className="text-lg font-medium text-gray-800 mb-2 text-left">
+    Vuoi aggiungere altri commenti?
+  </h3>
+  <textarea
+    value={textFeedback}
+    onChange={(e) => setTextFeedback(e.target.value)}
+    placeholder="Scrivi qui i tuoi commenti..."
+    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none h-32 text-gray-700"
+    maxLength={500}
+  />
+  <p className="text-right text-sm text-gray-500 mt-1">
+    {textFeedback.length}/500 caratteri
+  </p>
+</div>
           </div>
 
           {/* Pulsanti Azione */}
