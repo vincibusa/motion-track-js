@@ -28,8 +28,7 @@ const STAGE_RANGES = {
   [STAGES.STAGE3]: { min: 155, max: 180 },
 };
 
-const EXTENSION_THRESHOLD = 170;
-const FLEXION_THRESHOLD = 90;
+
 
 const KneeFlexion = ({ side = 'left' }) => {
   const getLandmarks = () => {
