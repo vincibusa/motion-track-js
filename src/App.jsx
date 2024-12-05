@@ -8,8 +8,8 @@ import ExerciseTest from "./Pages/ExerciseTest";
 import Report from "./Components/Report";
 import StrengthEvaluation from "./Pages/StrengthEvaluation";
 import ReportExercise from "./Components/ReportExercise";
-import KneeFlexion from "./Components/KneeFlexion";
-import ShoulderFlexion from "./Components/ShoulderFlexion";
+import KneeFlexion from "./KneeFlexion/KneeFlexion";
+import ShoulderFlexion from "./ShoulderFlexion/ShoulderFlexion";
 function App() {
   return (
     <Router>
