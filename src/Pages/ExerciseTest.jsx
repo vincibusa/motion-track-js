@@ -20,6 +20,13 @@ const ExerciseTest = () => {
       description: "Esercizi di riabilitazione per il ginocchio destro, focalizzati su forza e recupero della mobilità.",
       route: "/knee-right",
     },
+    {
+      id: 2,
+      title: "Esercizi di Riabilitazione Squat",
+      image: "https://img.freepik.com/free-vector/physical-therapy-exercise-concept-illustration_114360-8921.jpg?t=st=1732898372~exp=1732901972~hmac=509603820b72ece0954c017b0c4aea04a40260e548c77cbfbc3318bba176602f&w=740",
+      description: "Esercizi di riabilitazione per il ginocchio destro, focalizzati su forza e recupero della mobilità.",
+      route: "/squat",
+    },
   ];
 
   return (

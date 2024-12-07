@@ -5,20 +5,20 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Import Custom Hooks
-import useCameraPermission from '../hooks/useCameraPermission';
+import useCameraPermission from '../../hooks/useCameraPermission';
 import usePoseTracking from './hooks/usePoseTracking';
-import useTimer from '../hooks/useTimer';
-import useFullscreen from '../hooks/useFullScreen';
+import useTimer from '../../hooks/useTimer';
+import useFullscreen from '../../hooks/useFullScreen';
 
 // Import Constants
 import { STAGES, STAGE_RANGES } from './constants/constants';
 
 // Import Components
-import NavigationButton from './components/NavigationButton';
-import RepsDisplay from './components/RepsDisplay';
-import RepsInput from './components/RepsInput';
-import StartButton from './components/StartButton';
-import CountdownDisplay from './components/CountdownDisplay';
+import NavigationButton from '../../Components/NavigationButton';
+import RepsDisplay from '../../Components/RepsDisplay';
+import RepsInput from '../../Components/RepsInput';
+import StartButton from '../../Components/StartButton';
+import CountdownDisplay from '../../Components/CountdownDisplay';
 
 const KneeFlexion = ({ side = 'left' }) => {
   const getLandmarks = () => {
