@@ -211,15 +211,16 @@ const Squat = ({ side = 'left' }) => {
         <video
           style={{ transform: 'scaleX(-1)' }}
           ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-contain"
           autoPlay
           playsInline
           muted
         />
+
         <canvas
           style={{ transform: 'scaleX(-1)' }}
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full object-contain"
         />
       </div>
 

@@ -217,20 +217,21 @@ const KneeFlexion = ({ side = 'left' }) => {
       <RepsDisplay totalReps={totalReps} targetReps={targetReps} />
 
       <div className="relative w-full h-full">
-        <video
-          style={{ transform: 'scaleX(-1)' }}
-          ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover"
-          autoPlay
-          playsInline
-          muted
-        />
-        <canvas
-          style={{ transform: 'scaleX(-1)' }}
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full"
-        />
-      </div>
+      <video
+        style={{ transform: 'scaleX(-1)' }}
+        ref={videoRef}
+        className="absolute inset-0 w-full h-full object-contain"
+        autoPlay
+        playsInline
+        muted
+      />
+      <canvas
+        style={{ transform: 'scaleX(-1)' }}
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full object-contain"
+      />
+    </div>
+
 
       <div className="absolute inset-0 flex items-center justify-center">
         {!isTracking && !isCountdownActive && !showStartButton && (
