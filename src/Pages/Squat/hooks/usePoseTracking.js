@@ -1,10 +1,8 @@
-// usePoseTracking.js
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useState } from 'react';
 import * as MediapipePose from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
 import { toast } from 'react-toastify';
 import { POSE_LANDMARKS } from '../constants/constants';
-
 
 const usePoseTracking = ({
   side,
@@ -18,10 +16,53 @@ const usePoseTracking = ({
   const poseRef = useRef(null);
   const cameraRef = useRef(null);
   const trackingRef = useRef(false);
+  const [dimensions, setDimensions] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
 
   const REQUIRED_LANDMARKS = side === 'left'
     ? [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_KNEE, POSE_LANDMARKS.LEFT_ANKLE]
     : [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_KNEE, POSE_LANDMARKS.RIGHT_ANKLE];
+
+  // Funzione per calcolare le dimensioni ottimali della fotocamera
+  const calculateCameraDimensions = () => {
+    const aspectRatio = 16 / 9;
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+  
+    // Su mobile, usiamo la larghezza completa e aumentiamo l'altezza
+    if (width < 768) {
+      width = window.innerWidth; // Usa tutta la larghezza disponibile
+      height = window.innerHeight; // Usa tutta l'altezza disponibile
+    } else {
+      // Su desktop, aumentiamo le dimensioni massime
+      width = Math.min(1920, width * 1); // Aumentato da 1280 a 1920 e da 0.8 a 0.95
+      height = width / aspectRatio;
+      
+      // Se l'altezza calcolata è maggiore dell'altezza della finestra, 
+      // adattiamo in base all'altezza
+      if (height > window.innerHeight * 1) {
+        height = window.innerHeight * 1;
+        width = height * aspectRatio;
+      }
+    }
+  
+    return { 
+      width: Math.floor(width), 
+      height: Math.floor(height) 
+    };
+  };
+
+  // Aggiungiamo un listener per il resize della finestra
+  useEffect(() => {
+    const handleResize = () => {
+      setDimensions(calculateCameraDimensions());
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const calculateSquatAngle = (hip, knee, ankle) => {
     const hipToKnee = [knee[0] - hip[0], knee[1] - hip[1]];
@@ -128,6 +169,7 @@ const usePoseTracking = ({
     },
     []
   );
+
   const setupPose = useCallback(() => {
     const video = videoRef.current;
     const pose = new MediapipePose.Pose({
@@ -156,12 +198,12 @@ const usePoseTracking = ({
           }
         }
       },
-      width: 1280,
-      height: 720,
+      width: dimensions.width,
+      height: dimensions.height,
     });
     cameraRef.current = camera;
     camera.start();
-  }, [onResults, videoRef]);
+  }, [onResults, videoRef, dimensions]);
 
   useEffect(() => {
     if (isTracking) {
