@@ -19,6 +19,7 @@ import RepsDisplay from '../../Components/RepsDisplay';
 import RepsInput from '../../Components/RepsInput';
 import StartButton from '../../Components/StartButton';
 import CountdownDisplay from '../../Components/CountdownDisplay';
+import VideoCanvas from '../../Components/VideoCanvas';
 
 const KneeFlexion = ({ side = 'left' }) => {
   const getLandmarks = () => {
@@ -213,21 +214,7 @@ const KneeFlexion = ({ side = 'left' }) => {
 
       <RepsDisplay totalReps={totalReps} targetReps={targetReps} />
 
-      <div className="relative w-full h-full">
-      <video
-        style={{ transform: 'scaleX(-1)' }}
-        ref={videoRef}
-        className="absolute inset-0 w-full h-full object-cover md:object-contain"
-        autoPlay
-        playsInline
-        muted
-      />
-      <canvas
-        style={{ transform: 'scaleX(-1)' }}
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full object-cover md:object-contain"
-      />
-    </div>
+      <VideoCanvas videoRef={videoRef} canvasRef={canvasRef} isTracking={isTracking} />
 
 
       <div className="absolute inset-0 flex items-center justify-center">
