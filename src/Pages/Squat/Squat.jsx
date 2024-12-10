@@ -224,7 +224,7 @@ const Squat = ({ side = 'left' }) => {
     <div className="h-screen w-screen flex flex-col items-center justify-center bg-gray-900" ref={containerRef}>
       <ToastContainer />
       
-      <NavigationButton onClick={() => navigate('/mobility-test')} />
+      <NavigationButton onClick={() => navigate(-1)} />
 
       <RepsDisplay totalReps={totalReps} targetReps={targetReps} />
 
