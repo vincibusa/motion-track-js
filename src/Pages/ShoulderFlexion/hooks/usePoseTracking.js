@@ -46,7 +46,7 @@ const usePoseTracking = ({
   // Draw Landmarks on Canvas
   const drawLandmarks = (landmarks, ctx, width, height, REQUIRED_LANDMARKS) => {
     ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
 
     ctx.beginPath();
     REQUIRED_LANDMARKS.slice(0, -1).forEach((idx, i) => {

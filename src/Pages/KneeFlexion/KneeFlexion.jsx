@@ -7,7 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 // Import Custom Hooks
 import useCameraPermission from '../../hooks/useCameraPermission';
 import usePoseTracking from './hooks/usePoseTracking';
-import useTimer from '../../hooks/useTimer';
+
 import useFullscreen from '../../hooks/useFullScreen';
 
 // Import Constants
@@ -52,12 +52,9 @@ const KneeFlexion = ({ side = 'left' }) => {
   const { cameraPermissionGranted, requestCameraPermission } = useCameraPermission();
   const requestFullscreen = useFullscreen();
 
-  const handleExpire = useCallback(() => {
-    setIsTracking(false);
-    setTimeout(() => navigate('/report-exercise'), 500);
-  }, [navigate]);
 
-  const timer = useTimer(isTracking, handleExpire);
+
+ 
 
   const validateRepetition = useCallback(
     (currentAngle) => {

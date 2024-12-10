@@ -1,9 +1,9 @@
 // usePoseTracking.js
-import { useRef, useCallback, useEffect } from 'react';
-import * as MediapipePose from '@mediapipe/pose';
-import { Camera } from '@mediapipe/camera_utils';
-import { toast } from 'react-toastify';
+import { useCallback, useEffect } from 'react';
+
 import { POSE_LANDMARKS } from '../constants/constants';
+import useDrawLandmarks from '../../../hooks/useDrawLandmarks';
+import useSetupPose from '../../../hooks/useSetUpPose';
 
 
 const usePoseTracking = ({
@@ -15,13 +15,14 @@ const usePoseTracking = ({
   setMaxFlexion,
   validateRepetition,
 }) => {
-  const poseRef = useRef(null);
-  const cameraRef = useRef(null);
-  const trackingRef = useRef(false);
+
+
 
   const REQUIRED_LANDMARKS = side === 'left'
     ? [POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_KNEE, POSE_LANDMARKS.LEFT_ANKLE]
     : [POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_KNEE, POSE_LANDMARKS.RIGHT_ANKLE];
+
+    const { drawLandmarks } = useDrawLandmarks(REQUIRED_LANDMARKS);
 
   const calculateKneeAngle = (hip, knee, ankle) => {
     const hipToKnee = [knee[0] - hip[0], knee[1] - hip[1]];
@@ -38,32 +39,7 @@ const usePoseTracking = ({
     return angleDegrees;
   };
 
-  const drawLandmarks = (landmarks, ctx, width, height) => {
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
 
-    ctx.beginPath();
-    for (let i = 0; i < REQUIRED_LANDMARKS.length - 1; i++) {
-      const start = landmarks[REQUIRED_LANDMARKS[i]];
-      const end = landmarks[REQUIRED_LANDMARKS[i + 1]];
-
-      if (start && end) {
-        ctx.moveTo(start.x * width, start.y * height);
-        ctx.lineTo(end.x * width, end.y * height);
-      }
-    }
-    ctx.stroke();
-
-    ctx.fillStyle = '#ADD8E6';
-    REQUIRED_LANDMARKS.forEach((idx) => {
-      const landmark = landmarks[idx];
-      if (landmark) {
-        ctx.beginPath();
-        ctx.arc(landmark.x * width, landmark.y * height, 5, 0, 2 * Math.PI);
-        ctx.fill();
-      }
-    });
-  };
 
   const onResults = useCallback(
     (results) => {
@@ -106,52 +82,13 @@ const usePoseTracking = ({
     []
   );
 
-  const setupPose = useCallback(() => {
-    const video = videoRef.current;
-    const pose = new MediapipePose.Pose({
-      locateFile: (file) =>
-        `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
-    });
-
-    pose.setOptions({
-      modelComplexity: 1,
-      smoothLandmarks: true,
-      minDetectionConfidence: 0.6,
-      minTrackingConfidence: 0.6,
-      enableSegmentation: false,
-    });
-
-    pose.onResults(onResults);
-    poseRef.current = pose;
-
-    const camera = new Camera(video, {
-      onFrame: async () => {
-        if (trackingRef.current && poseRef.current) {
-          try {
-            await poseRef.current.send({ image: video });
-          } catch (error) {
-            console.error("Error sending frame to pose:", error);
-          }
-        }
-      },
-      width: 1280,
-      height: 720,
-    });
-    cameraRef.current = camera;
-    camera.start();
-  }, [onResults, videoRef]);
-
+  const { setupPose, cleanup, trackingRef } = useSetupPose({ videoRef, onResults });
   useEffect(() => {
     if (isTracking) {
       trackingRef.current = true;
       setupPose();
     }
-    return () => {
-      trackingRef.current = false;
-      cameraRef.current?.stop();
-      poseRef.current?.close();
-      poseRef.current = null;
-    };
+    return cleanup;
   }, [isTracking, setupPose]);
 
   return null;

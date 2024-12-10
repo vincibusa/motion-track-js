@@ -54,15 +54,19 @@ const Squat = ({ side = 'left' }) => {
 
   const validateRepetition = useCallback(
     (currentAngle) => {
+      console.log('📐 Current Angle:', currentAngle);
+
       const determineStage = (angle) => {
+        let stage = null;
         if (angle >= STAGE_RANGES.STAGE1.min && angle <= STAGE_RANGES.STAGE1.max) {
-          return STAGES.STAGE1;
+          stage = STAGES.STAGE1;
         } else if (angle >= STAGE_RANGES.STAGE2.min && angle < STAGE_RANGES.STAGE2.max) {
-          return STAGES.STAGE2;
+          stage = STAGES.STAGE2;
         } else if (angle >= STAGE_RANGES.STAGE3.min && angle < STAGE_RANGES.STAGE3.max) {
-          return STAGES.STAGE3;
+          stage = STAGES.STAGE3;
         }
-        return null;
+        console.log('🎯 Determined Stage:', stage);
+        return stage;
       };
 
       const validateStageSequence = (sequence) => {
@@ -73,30 +77,45 @@ const Squat = ({ side = 'left' }) => {
           STAGES.STAGE2,  // Risalita
           STAGES.STAGE1   // Ritorno posizione eretta
         ];
-        if (sequence.length !== correctSequence.length) return false;
-        return sequence.every((stage, index) => stage === correctSequence[index]);
+        console.log('🔍 Validating Sequence:', sequence);
+        console.log('✅ Correct Sequence:', correctSequence);
+        if (sequence.length !== correctSequence.length) {
+          console.log('❌ Sequence length mismatch');
+          return false;
+        }
+        const isValid = sequence.every((stage, index) => stage === correctSequence[index]);
+        console.log('🎯 Sequence Valid:', isValid);
+        return isValid;
       };
 
       const newStage = determineStage(currentAngle);
 
       if (!newStage) {
+        console.log('⚠️ No valid stage detected, current sequence:', stageSequence);
         if (stageSequence.length > 0) {
+          console.log('🔄 Resetting stage sequence');
           setStageSequence([]);
         }
         return;
       }
 
       if (newStage !== currentStage) {
+        console.log('🔄 Stage changed from', currentStage, 'to', newStage);
         setCurrentStage(newStage);
 
         setStageSequence((prev) => {
+          console.log('📊 Previous sequence:', prev);
+          
           if (prev[prev.length - 1] === newStage) {
+            console.log('🔄 Duplicate stage detected, keeping previous sequence');
             return prev;
           }
 
           const newSequence = [...prev, newStage];
+          console.log('📊 New sequence:', newSequence);
 
           if (validateStageSequence(newSequence)) {
+            console.log('✅ Valid squat repetition detected!');
             setValidReps((prevReps) => prevReps + 1);
             setTotalReps((prevTotal) => prevTotal + 1);
             toast.success(`Squat valido!`, {
@@ -105,6 +124,7 @@ const Squat = ({ side = 'left' }) => {
             });
             return [];
           } else if (newSequence.length === 5) {
+            console.log('❌ Invalid squat sequence detected');
             setInvalidReps((prevReps) => prevReps + 1);
             setTotalReps((prevTotal) => prevTotal + 1);
             toast.error(`Squat non valido!`, {
@@ -117,6 +137,7 @@ const Squat = ({ side = 'left' }) => {
             newStage === STAGES.STAGE1 &&
             prev[prev.length - 1] === STAGES.STAGE2
           ) {
+            console.log('⚠️ Incomplete squat detected - not deep enough');
             toast.error(`Squat incompleto, scendi più in basso`, {
               position: "top-center",
               autoClose: 1000,
