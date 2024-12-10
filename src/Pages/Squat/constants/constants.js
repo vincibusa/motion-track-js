@@ -1,22 +1,28 @@
 export const STAGES = {
-  STAGE1: 'STAGE1', // Standing
-  STAGE2: 'STAGE2', // Going down
-  STAGE3: 'STAGE3', // Deep squat
+  STAGE1: 'STAGE1', // Posizione eretta
+  STAGE2: 'STAGE2', // Discesa
+  STAGE3: 'STAGE3', // Squat profondo
 };
 
 export const STAGE_RANGES = {
-  [STAGES.STAGE1]: { min: 160, max: 180 }, // Standing position
-  [STAGES.STAGE2]: { min: 90, max: 160 }, // Descent
-  [STAGES.STAGE3]: { min: 60, max: 90 }, // Deep squat
+  [STAGES.STAGE1]: { min: 165, max: 180 }, // Gambe quasi dritte
+  [STAGES.STAGE2]: { min: 110, max: 165 }, // Fase di discesa
+  [STAGES.STAGE3]: { min: 70, max: 110 },  // Squat profondo
 };
 
 export const POSE_LANDMARKS = {
-  LEFT_SHOULDER: 11,
-  RIGHT_SHOULDER: 12,
   LEFT_HIP: 23,
   LEFT_KNEE: 25,
   LEFT_ANKLE: 27,
+  LEFT_SHOULDER: 11,
   RIGHT_HIP: 24,
   RIGHT_KNEE: 26,
   RIGHT_ANKLE: 28,
+  RIGHT_SHOULDER: 12,
+};
+
+export const TRUNK_ANGLE_RANGES = {
+  GOOD: { min: 45, max: 90 }, // Good trunk angle during squat
+  WARNING: { min: 30, max: 45 }, // Warning zone
+  BAD: { min: 0, max: 30 } // Poor form, too much forward lean
 };

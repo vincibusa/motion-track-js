@@ -23,36 +23,40 @@ const usePoseTracking = ({
     ? [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_KNEE, POSE_LANDMARKS.LEFT_ANKLE]
     : [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_KNEE, POSE_LANDMARKS.RIGHT_ANKLE];
 
-  const calculateSquatAngle = (shoulder, hip, knee, ankle) => {
-    // Calculate hip angle (between shoulder-hip and hip-knee)
+  const calculateSquatAngle = (hip, knee, ankle) => {
+    const hipToKnee = [knee[0] - hip[0], knee[1] - hip[1]];
+    const kneeToAnkle = [ankle[0] - knee[0], ankle[1] - knee[1]];
+    
+    const dotProduct = hipToKnee[0] * kneeToAnkle[0] + hipToKnee[1] * kneeToAnkle[1];
+    const magnitude1 = Math.hypot(...hipToKnee);
+    const magnitude2 = Math.hypot(...kneeToAnkle);
+    
+    const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
+    let angleDegrees = (Math.acos(cosAngle) * 180) / Math.PI;
+    angleDegrees = 180 - angleDegrees;
+    
+    return angleDegrees;
+  };
+
+  const calculateTrunkAngle = (shoulder, hip, knee) => {
     const shoulderToHip = [hip[0] - shoulder[0], hip[1] - shoulder[1]];
     const hipToKnee = [knee[0] - hip[0], knee[1] - hip[1]];
     
-    const hipDotProduct = shoulderToHip[0] * hipToKnee[0] + shoulderToHip[1] * hipToKnee[1];
-    const hipMagnitude1 = Math.hypot(...shoulderToHip);
-    const hipMagnitude2 = Math.hypot(...hipToKnee);
+    const dotProduct = shoulderToHip[0] * hipToKnee[0] + shoulderToHip[1] * hipToKnee[1];
+    const magnitude1 = Math.hypot(...shoulderToHip);
+    const magnitude2 = Math.hypot(...hipToKnee);
     
-    const hipCosAngle = Math.min(Math.max(hipDotProduct / (hipMagnitude1 * hipMagnitude2), -1), 1);
-    const hipAngle = (Math.acos(hipCosAngle) * 180) / Math.PI;
-
-    // Calculate knee angle (between hip-knee and knee-ankle)
-    const kneeToAnkle = [ankle[0] - knee[0], ankle[1] - knee[1]];
+    const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
+    let angleDegrees = (Math.acos(cosAngle) * 180) / Math.PI;
     
-    const kneeDotProduct = hipToKnee[0] * kneeToAnkle[0] + hipToKnee[1] * kneeToAnkle[1];
-    const kneeMagnitude1 = Math.hypot(...hipToKnee);
-    const kneeMagnitude2 = Math.hypot(...kneeToAnkle);
-    
-    const kneeCosAngle = Math.min(Math.max(kneeDotProduct / (kneeMagnitude1 * kneeMagnitude2), -1), 1);
-    const kneeAngle = (Math.acos(kneeCosAngle) * 180) / Math.PI;
-
-    // Return the average of hip and knee angles for overall squat angle
-    return (hipAngle + kneeAngle) / 2;
+    return angleDegrees;
   };
 
   const drawLandmarks = (landmarks, ctx, width, height) => {
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 2;
 
+    // Draw lines between landmarks
     ctx.beginPath();
     for (let i = 0; i < REQUIRED_LANDMARKS.length - 1; i++) {
       const start = landmarks[REQUIRED_LANDMARKS[i]];
@@ -65,6 +69,7 @@ const usePoseTracking = ({
     }
     ctx.stroke();
 
+    // Draw landmark points
     ctx.fillStyle = '#ADD8E6';
     REQUIRED_LANDMARKS.forEach((idx) => {
       const landmark = landmarks[idx];
@@ -107,12 +112,14 @@ const usePoseTracking = ({
         landmarks[ankleIndex].y * height,
       ];
 
-      const squatAngle = calculateSquatAngle(shoulder, hip, knee, ankle);
+      const squatAngle = calculateSquatAngle(hip, knee, ankle);
+      const trunkAngle = calculateTrunkAngle(shoulder, hip, knee);
+      
       setAngle(squatAngle);
-      validateRepetition(squatAngle);
+      validateRepetition(squatAngle, trunkAngle);
 
       setMaxFlexion((prevMax) => {
-        const updatedMax = Math.min(prevMax, squatAngle); // Per lo squat, l'angolo minore indica una flessione maggiore
+        const updatedMax = Math.min(prevMax, squatAngle);
         localStorage.setItem('maxFlexion', updatedMax.toString());
         return updatedMax;
       });

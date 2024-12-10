@@ -7,7 +7,6 @@ import 'react-toastify/dist/ReactToastify.css';
 // Import Custom Hooks
 import useCameraPermission from '../../hooks/useCameraPermission';
 import usePoseTracking from './hooks/usePoseTracking';
-import useTimer from '../../hooks/useTimer';
 import useFullscreen from '../../hooks/useFullScreen';
 
 // Import Constants
@@ -52,21 +51,15 @@ const Squat = ({ side = 'left' }) => {
   const { cameraPermissionGranted, requestCameraPermission } = useCameraPermission();
   const requestFullscreen = useFullscreen();
 
-  const handleExpire = useCallback(() => {
-    setIsTracking(false);
-    setTimeout(() => navigate('/report-exercise'), 500);
-  }, [navigate]);
-
-  const timer = useTimer(isTracking, handleExpire);
 
   const validateRepetition = useCallback(
     (currentAngle) => {
       const determineStage = (angle) => {
-        if (angle >= STAGE_RANGES.STAGE1.min && angle < STAGE_RANGES.STAGE1.max) {
+        if (angle >= STAGE_RANGES.STAGE1.min && angle <= STAGE_RANGES.STAGE1.max) {
           return STAGES.STAGE1;
         } else if (angle >= STAGE_RANGES.STAGE2.min && angle < STAGE_RANGES.STAGE2.max) {
           return STAGES.STAGE2;
-        } else if (angle >= STAGE_RANGES.STAGE3.min && angle <= STAGE_RANGES.STAGE3.max) {
+        } else if (angle >= STAGE_RANGES.STAGE3.min && angle < STAGE_RANGES.STAGE3.max) {
           return STAGES.STAGE3;
         }
         return null;
@@ -74,11 +67,11 @@ const Squat = ({ side = 'left' }) => {
 
       const validateStageSequence = (sequence) => {
         const correctSequence = [
-          STAGES.STAGE1,
-          STAGES.STAGE2,
-          STAGES.STAGE3,
-          STAGES.STAGE2,
-          STAGES.STAGE1,
+          STAGES.STAGE1,  // Posizione eretta
+          STAGES.STAGE2,  // Discesa
+          STAGES.STAGE3,  // Squat profondo
+          STAGES.STAGE2,  // Risalita
+          STAGES.STAGE1   // Ritorno posizione eretta
         ];
         if (sequence.length !== correctSequence.length) return false;
         return sequence.every((stage, index) => stage === correctSequence[index]);
@@ -106,7 +99,7 @@ const Squat = ({ side = 'left' }) => {
           if (validateStageSequence(newSequence)) {
             setValidReps((prevReps) => prevReps + 1);
             setTotalReps((prevTotal) => prevTotal + 1);
-            toast.success(`Ripetizione valida!`, {
+            toast.success(`Squat valido!`, {
               position: "top-center",
               autoClose: 1000,
             });
@@ -114,7 +107,7 @@ const Squat = ({ side = 'left' }) => {
           } else if (newSequence.length === 5) {
             setInvalidReps((prevReps) => prevReps + 1);
             setTotalReps((prevTotal) => prevTotal + 1);
-            toast.error(`Ripetizione errata!`, {
+            toast.error(`Squat non valido!`, {
               position: "top-center",
               autoClose: 1000,
             });
@@ -124,14 +117,12 @@ const Squat = ({ side = 'left' }) => {
             newStage === STAGES.STAGE1 &&
             prev[prev.length - 1] === STAGES.STAGE2
           ) {
-            toast.error(`Ripetizione non valida, stendi meglio il ginocchio`, {
+            toast.error(`Squat incompleto, scendi più in basso`, {
               position: "top-center",
               autoClose: 1000,
             });
             setInvalidReps((prevReps) => prevReps + 1);
             setTotalReps((prevTotal) => prevTotal + 1);
-            return [];
-          } else if (newSequence.length > 5) {
             return [];
           }
 
