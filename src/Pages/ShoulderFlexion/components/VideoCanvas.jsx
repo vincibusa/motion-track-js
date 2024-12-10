@@ -7,7 +7,7 @@ const VideoCanvas = ({ videoRef, canvasRef, isTracking }) => {
       <video
         style={{ transform: 'scaleX(-1)' }}
         ref={videoRef}
-        className="absolute inset-0 w-full h-full object-contain"
+        className="absolute inset-0 w-full h-full object-cover md:object-contain"
         autoPlay
         playsInline
         muted
@@ -15,7 +15,7 @@ const VideoCanvas = ({ videoRef, canvasRef, isTracking }) => {
       <canvas
         style={{ transform: 'scaleX(-1)' }}
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full object-contain"
+        className="absolute inset-0 w-full h-full object-cover md:object-contain"
       />
     </div>
   );
