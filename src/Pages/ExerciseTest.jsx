@@ -21,11 +21,25 @@ const ExerciseTest = () => {
       route: "/knee-right",
     },
     {
-      id: 2,
+      id: 3,
       title: "Esercizi di Riabilitazione Squat",
       image: "https://i.ibb.co/LQ9x8xM/DALL-E-2024-12-08-21-41-07-A-cartoon-style-illustration-of-a-patient-at-home-performing-a-squat-exer.webp",
       description: "Esercizi di riabilitazione per il ginocchio destro, focalizzati su forza e recupero della mobilità.",
       route: "/squat",
+    },
+    {
+      id: 3,
+      title: "Esercizi di Riabilitazione Bicep Curl sinistro",
+      image: "https://i.ibb.co/LQ9x8xM/DALL-E-2024-12-08-21-41-07-A-cartoon-style-illustration-of-a-patient-at-home-performing-a-squat-exer.webp",
+      description: "Esercizi di riabilitazione per il ginocchio destro, focalizzati su forza e recupero della mobilità.",
+      route: "/bicep-curl-left",
+    },
+    {
+      id: 3,
+      title: "Esercizi di Riabilitazione Bicep Curl destro",
+      image: "https://i.ibb.co/LQ9x8xM/DALL-E-2024-12-08-21-41-07-A-cartoon-style-illustration-of-a-patient-at-home-performing-a-squat-exer.webp",
+      description: "Esercizi di riabilitazione per il ginocchio destro, focalizzati su forza e recupero della mobilità.",
+      route: "/bicep-curl-right",
     },
   ];
 

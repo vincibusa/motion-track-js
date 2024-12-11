@@ -46,7 +46,7 @@ const usePoseTracking = ({
   // Draw Landmarks on Canvas
   const drawLandmarks = (landmarks, ctx, width, height, REQUIRED_LANDMARKS) => {
     ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
 
     ctx.beginPath();
     REQUIRED_LANDMARKS.slice(0, -1).forEach((idx, i) => {
@@ -64,7 +64,7 @@ const usePoseTracking = ({
       const landmark = landmarks[idx];
       if (landmark) {
         ctx.beginPath();
-        ctx.arc(landmark.x * width, landmark.y * height, 5, 0, 2 * Math.PI);
+        ctx.arc(landmark.x * width, landmark.y * height, 2, 0, 2 * Math.PI);
         ctx.fill();
       }
     });
@@ -141,8 +141,8 @@ const usePoseTracking = ({
     pose.setOptions({
       modelComplexity: 1,
       smoothLandmarks: true,
-      minDetectionConfidence: 0.6,
-      minTrackingConfidence: 0.6,
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.7,
       enableSegmentation: false,
     });
 

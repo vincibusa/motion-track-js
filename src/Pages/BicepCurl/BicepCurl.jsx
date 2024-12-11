@@ -1,4 +1,4 @@
-// components/KneeFlexion.jsx
+// components/Squat.jsx
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
@@ -7,7 +7,6 @@ import 'react-toastify/dist/ReactToastify.css';
 // Import Custom Hooks
 import useCameraPermission from '../../hooks/useCameraPermission';
 import usePoseTracking from './hooks/usePoseTracking';
-
 import useFullscreen from '../../hooks/useFullScreen';
 
 // Import Constants
@@ -21,12 +20,13 @@ import StartButton from '../../Components/StartButton';
 import CountdownDisplay from '../../Components/CountdownDisplay';
 import VideoCanvas from '../../Components/VideoCanvas';
 
-const KneeFlexion = ({ side = 'left' }) => {
-  const getLandmarks = () => {
-    return side === 'left'
-      ? ['LEFT_HIP', 'LEFT_KNEE', 'LEFT_ANKLE']
-      : ['RIGHT_HIP', 'RIGHT_KNEE', 'RIGHT_ANKLE'];
-  };
+const BicepCurl = ({ side = 'left' }) => {
+
+    const getLandmarks = () => {
+        return side === 'left'
+          ? ['LEFT_SHOULDER', 'LEFT_ELBOW', 'LEFT_WRIST']
+          : ['RIGHT_SHOULDER', 'RIGHT_ELBOW', 'RIGHT_WRIST'];
+      };
 
   const REQUIRED_LANDMARKS = getLandmarks();
 
@@ -54,65 +54,81 @@ const KneeFlexion = ({ side = 'left' }) => {
   const requestFullscreen = useFullscreen();
 
 
-
- 
-
-  const validateRepetition = useCallback(
+const validateRepetition = useCallback(
     (currentAngle) => {
+      console.log('📐 Current Angle:', currentAngle);
+
       const determineStage = (angle) => {
-        if (angle >= STAGE_RANGES.STAGE1.min && angle < STAGE_RANGES.STAGE1.max) {
-          return STAGES.STAGE1;
+        let stage = null;
+        if (angle >= STAGE_RANGES.STAGE1.min && angle <= STAGE_RANGES.STAGE1.max) {
+          stage = STAGES.STAGE1;
         } else if (angle >= STAGE_RANGES.STAGE2.min && angle < STAGE_RANGES.STAGE2.max) {
-          return STAGES.STAGE2;
-        } else if (angle >= STAGE_RANGES.STAGE3.min && angle <= STAGE_RANGES.STAGE3.max) {
-          return STAGES.STAGE3;
+          stage = STAGES.STAGE2;
+        } else if (angle >= STAGE_RANGES.STAGE3.min && angle < STAGE_RANGES.STAGE3.max) {
+          stage = STAGES.STAGE3;
         }
-        return null;
+    
+        return stage;
       };
 
       const validateStageSequence = (sequence) => {
         const correctSequence = [
-          STAGES.STAGE1,
-          STAGES.STAGE2,
-          STAGES.STAGE3,
-          STAGES.STAGE2,
-          STAGES.STAGE1,
+          STAGES.STAGE1,  // Braccio disteso
+          STAGES.STAGE2,  // Curl parziale
+          STAGES.STAGE3,  // Curl completo
+          STAGES.STAGE2,  // Ritorno curl parziale
+          STAGES.STAGE1   // Ritorno braccio disteso
         ];
-        if (sequence.length !== correctSequence.length) return false;
-        return sequence.every((stage, index) => stage === correctSequence[index]);
+  
+        if (sequence.length !== correctSequence.length) {
+  
+          return false;
+        }
+        const isValid = sequence.every((stage, index) => stage === correctSequence[index]);
+   
+        return isValid;
       };
 
       const newStage = determineStage(currentAngle);
 
       if (!newStage) {
+
         if (stageSequence.length > 0) {
+
           setStageSequence([]);
         }
         return;
       }
 
       if (newStage !== currentStage) {
+      
         setCurrentStage(newStage);
 
         setStageSequence((prev) => {
+       
+          
           if (prev[prev.length - 1] === newStage) {
+           
             return prev;
           }
 
           const newSequence = [...prev, newStage];
+        
 
           if (validateStageSequence(newSequence)) {
+         
             setValidReps((prevReps) => prevReps + 1);
             setTotalReps((prevTotal) => prevTotal + 1);
-            toast.success(`Ripetizione valida!`, {
+            toast.success(`Bicep curl valido!`, {
               position: "top-center",
               autoClose: 1000,
             });
             return [];
           } else if (newSequence.length === 5) {
+     
             setInvalidReps((prevReps) => prevReps + 1);
             setTotalReps((prevTotal) => prevTotal + 1);
-            toast.error(`Ripetizione errata!`, {
+            toast.error(`Bicep curl non valido!`, {
               position: "top-center",
               autoClose: 1000,
             });
@@ -122,14 +138,13 @@ const KneeFlexion = ({ side = 'left' }) => {
             newStage === STAGES.STAGE1 &&
             prev[prev.length - 1] === STAGES.STAGE2
           ) {
-            toast.error(`Ripetizione non valida, stendi meglio il ginocchio`, {
+
+            toast.error(`Bicep curl incompleto, completa il movimento`, {
               position: "top-center",
               autoClose: 1000,
             });
             setInvalidReps((prevReps) => prevReps + 1);
             setTotalReps((prevTotal) => prevTotal + 1);
-            return [];
-          } else if (newSequence.length > 5) {
             return [];
           }
 
@@ -210,12 +225,11 @@ const KneeFlexion = ({ side = 'left' }) => {
     <div className="h-screen w-screen flex flex-col items-center justify-center bg-gray-900" ref={containerRef}>
       <ToastContainer />
       
-           <NavigationButton onClick={() => navigate(-1)} />
+      <NavigationButton onClick={() => navigate(-1)} />
 
       <RepsDisplay totalReps={totalReps} targetReps={targetReps} />
 
       <VideoCanvas videoRef={videoRef} canvasRef={canvasRef} isTracking={isTracking} />
-
 
       <div className="absolute inset-0 flex items-center justify-center">
         {!isTracking && !isCountdownActive && !showStartButton && (
@@ -233,4 +247,4 @@ const KneeFlexion = ({ side = 'left' }) => {
   );
 }
 
-export default KneeFlexion;
+export default BicepCurl;
