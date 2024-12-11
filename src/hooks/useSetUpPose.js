@@ -16,13 +16,12 @@ const useSetupPose = ({ videoRef, onResults }) => {
     });
 
     pose.setOptions({
-      modelComplexity: 2,
+      modelComplexity: 1,
       smoothLandmarks: true,
-      minDetectionConfidence: 0.6,
-      minTrackingConfidence: 0.6,
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.7,
       enableSegmentation: false,
     });
-
     pose.onResults(onResults);
     poseRef.current = pose;
 
