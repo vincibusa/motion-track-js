@@ -11,6 +11,7 @@ import ReportExercise from "./Components/ReportExercise";
 import KneeFlexion from "./Pages/KneeFlexion/KneeFlexion";
 import ShoulderFlexion from "./Pages/ShoulderFlexion/ShoulderFlexion"
 import Squat from "./Pages/Squat/Squat";
+import BicepCurl from "./Pages/BicepCurl/BicepCurl";
 function App() {
   return (
     <Router>
@@ -26,6 +27,8 @@ function App() {
         <Route path="/report" element={<Report/>}/>
         <Route path="/report-exercise" element={<ReportExercise/>}/>
         <Route path="/squat" element={<Squat/>}/>
+        <Route path ="/bicep-curl-right" element={<BicepCurl side="right"/>}/>
+        <Route path ="/bicep-curl-left" element={<BicepCurl side="left"/>}/>
       </Routes>
     </Router>
   );
