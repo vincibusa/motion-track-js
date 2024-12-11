@@ -64,7 +64,7 @@ const usePoseTracking = ({
       const landmark = landmarks[idx];
       if (landmark) {
         ctx.beginPath();
-        ctx.arc(landmark.x * width, landmark.y * height, 5, 0, 2 * Math.PI);
+        ctx.arc(landmark.x * width, landmark.y * height, 2, 0, 2 * Math.PI);
         ctx.fill();
       }
     });
