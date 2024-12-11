@@ -10,15 +10,29 @@ const MobilitaTest = () => {
       id: 1,
       title: "Flessione Spalla Sinistra",
       image: "https://i.ibb.co/kDN2fqR/ecfba699-dde5-4e64-8275-56633873be66.jpg",
-      description: "Test per valutare la mobilità della spalla sinistra attraverso esercizi di flessione.",
+      description: "Test per valutare la mobilità della spalla sinistra in flessione.",
       route: "/shoulder-left",
     },
     {
       id: 2,
       title: "Flessione Spalla Destra",
       image: "https://i.ibb.co/kDN2fqR/ecfba699-dde5-4e64-8275-56633873be66.jpg",
-      description: "Test per valutare la mobilità della spalla destra attraverso esercizi di flessione.",
+      description: "Test per valutare la mobilità della spalla destra in flessione.",
       route: "/shoulder-right",
+    },
+    {
+      id: 3,
+      title: "Estensione Spalla Sinistra",
+      image: "https://i.ibb.co/Vtkg4mZ/DALL-E-2024-12-11-13-18-56-A-cartoon-style-illustration-of-a-patient-at-home-performing-a-shoulder-e.webp",
+      description: "Test per valutare la mobilità della spalla sinistra in estensione.",
+      route: "/shoulder-left-e",
+    },
+    {
+      id: 4,
+      title: "Estensione Spalla Destra",
+      image: "https://i.ibb.co/Vtkg4mZ/DALL-E-2024-12-11-13-18-56-A-cartoon-style-illustration-of-a-patient-at-home-performing-a-shoulder-e.webp",
+      description: "Test per valutare la mobilità della spalla destra in estensione.",
+      route: "/shoulder-right-e",
     },
   ];
 

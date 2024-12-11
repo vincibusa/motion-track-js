@@ -31,7 +31,7 @@ const HomePage = () => {
   return (
     <div className="min-h-screen relative">
       {/* Sfondo dinamico con gradiente animato */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-gradient"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-white via-turquoise to-green animate-gradient"></div>
 
       {/* Contenuto sopra lo sfondo */}
       <div className="relative z-10 min-h-screen flex flex-col items-center">
