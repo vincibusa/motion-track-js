@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // ShoulderFlexion.jsx
 import React, { useRef, useState, useCallback } from 'react';
 import { FaAngleLeft } from "react-icons/fa";

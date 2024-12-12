@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // usePoseTracking.js
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { POSE_LANDMARKS } from '../constants/constants';
 import useSetupPose from '../../../hooks/useSetUpPose';
 import useDrawLandmarks from '../../../hooks/useDrawLandmarks';
@@ -13,13 +14,17 @@ const usePoseTracking = ({
   setMaxFlexion,
   validateRepetition,
 }) => {
-  const REQUIRED_LANDMARKS = side === 'left'
-    ? [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_KNEE, POSE_LANDMARKS.LEFT_ANKLE]
-    : [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_KNEE, POSE_LANDMARKS.RIGHT_ANKLE];
+  const REQUIRED_LANDMARKS = useMemo(() => 
+    side === 'left'
+      ? [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_KNEE, POSE_LANDMARKS.LEFT_ANKLE]
+      : [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_KNEE, POSE_LANDMARKS.RIGHT_ANKLE],
+    [side]
+  );
+
 
   const { drawLandmarks } = useDrawLandmarks(REQUIRED_LANDMARKS);
 
-  const calculateSquatAngle = (hip, knee, ankle) => {
+  const calculateSquatAngle = useCallback((hip, knee, ankle) => {
     const hipToKnee = [knee[0] - hip[0], knee[1] - hip[1]];
     const kneeToAnkle = [ankle[0] - knee[0], ankle[1] - knee[1]];
     
@@ -32,9 +37,9 @@ const usePoseTracking = ({
     angleDegrees = 180 - angleDegrees;
     console.log('ANGOLO FINALE:', angleDegrees, 'gradi');
     return angleDegrees;
-  };
+  }, []);
 
-  const calculateTrunkAngle = (shoulder, hip, knee) => {
+  const calculateTrunkAngle = useCallback((shoulder, hip, knee) => {
     const shoulderToHip = [hip[0] - shoulder[0], hip[1] - shoulder[1]];
     const hipToKnee = [knee[0] - hip[0], knee[1] - hip[1]];
     
@@ -43,10 +48,8 @@ const usePoseTracking = ({
     const magnitude2 = Math.hypot(...hipToKnee);
     
     const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
-    let angleDegrees = (Math.acos(cosAngle) * 180) / Math.PI;
-    
-    return angleDegrees;
-  };
+    return (Math.acos(cosAngle) * 180) / Math.PI;
+  }, []);
 
   const onResults = useCallback(
     (results) => {

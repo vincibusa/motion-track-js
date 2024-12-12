@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // usePoseTracking.js
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { POSE_LANDMARKS } from '../constants/constants';
 import useDrawLandmarks from '../../../hooks/useDrawLandmarks';
@@ -18,26 +19,30 @@ const usePoseTracking = ({
 
 
 
-  const REQUIRED_LANDMARKS = side === 'left'
-    ? [POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_KNEE, POSE_LANDMARKS.LEFT_ANKLE]
-    : [POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_KNEE, POSE_LANDMARKS.RIGHT_ANKLE];
+  const REQUIRED_LANDMARKS = useMemo(() => 
+    side === 'left'
+      ? [POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_KNEE, POSE_LANDMARKS.LEFT_ANKLE]
+      : [POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_KNEE, POSE_LANDMARKS.RIGHT_ANKLE],
+    [side]
+  );
+
 
     const { drawLandmarks } = useDrawLandmarks(REQUIRED_LANDMARKS);
 
-  const calculateKneeAngle = (hip, knee, ankle) => {
-    const hipToKnee = [knee[0] - hip[0], knee[1] - hip[1]];
-    const kneeToAnkle = [ankle[0] - knee[0], ankle[1] - knee[1]];
-    
-    const dotProduct = hipToKnee[0] * kneeToAnkle[0] + hipToKnee[1] * kneeToAnkle[1];
-    const magnitude1 = Math.hypot(...hipToKnee);
-    const magnitude2 = Math.hypot(...kneeToAnkle);
-    
-    const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
-    let angleDegrees = (Math.acos(cosAngle) * 180) / Math.PI;
-    angleDegrees = 180 - angleDegrees;
-    
-    return angleDegrees;
-  };
+    const calculateKneeAngle = useCallback((hip, knee, ankle) => {
+      const hipToKnee = [knee[0] - hip[0], knee[1] - hip[1]];
+      const kneeToAnkle = [ankle[0] - knee[0], ankle[1] - knee[1]];
+      
+      const dotProduct = hipToKnee[0] * kneeToAnkle[0] + hipToKnee[1] * kneeToAnkle[1];
+      const magnitude1 = Math.hypot(...hipToKnee);
+      const magnitude2 = Math.hypot(...kneeToAnkle);
+      
+      const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
+      let angleDegrees = (Math.acos(cosAngle) * 180) / Math.PI;
+      angleDegrees = 180 - angleDegrees;
+      
+      return angleDegrees;
+    }, []);
 
 
 

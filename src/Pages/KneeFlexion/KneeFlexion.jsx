@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // components/KneeFlexion.jsx
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';

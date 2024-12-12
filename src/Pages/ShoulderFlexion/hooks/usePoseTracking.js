@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // usePoseTracking.js
 import { useRef, useCallback, useEffect } from 'react';
 import * as MediapipePose from '@mediapipe/pose';

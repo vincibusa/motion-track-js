@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // components/Squat.jsx
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';

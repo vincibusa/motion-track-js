@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 
   
   // usePoseTracking.js
-  import { useCallback, useEffect } from 'react';
+  import { useCallback, useEffect, useMemo } from 'react';
   import { POSE_LANDMARKS } from '../constants/constants';
   import useDrawLandmarks from '../../../hooks/useDrawLandmarks';
   import useSetupPose from '../../../hooks/useSetUpPose';
@@ -15,14 +16,16 @@
     setMaxFlexion,
     validateRepetition,
   }) => {
-    const REQUIRED_LANDMARKS = side === 'left'
-      ? [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_ELBOW, POSE_LANDMARKS.LEFT_WRIST]
-      : [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_ELBOW, POSE_LANDMARKS.RIGHT_WRIST];
+    const REQUIRED_LANDMARKS = useMemo(() => 
+      side === 'left'
+        ? [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_ELBOW, POSE_LANDMARKS.LEFT_WRIST]
+        : [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_ELBOW, POSE_LANDMARKS.RIGHT_WRIST],
+      [side]
+    );
   
     const { drawLandmarks } = useDrawLandmarks(REQUIRED_LANDMARKS);
   
-    const calculateArmAngle = (shoulder, elbow, wrist) => {
-      // Vettori per il braccio superiore e inferiore
+    const calculateArmAngle = useCallback((shoulder, elbow, wrist) => {
       const upperArm = {
         x: elbow[0] - shoulder[0],
         y: elbow[1] - shoulder[1]
@@ -33,27 +36,20 @@
         y: wrist[1] - elbow[1]
       };
   
-      // Calcolo dell'angolo usando l'arcotangente per ottenere gli angoli rispetto alla verticale
       const upperArmAngle = Math.atan2(upperArm.y, upperArm.x);
       const forearmAngle = Math.atan2(forearm.y, forearm.x);
   
-      // Calcolo della differenza tra gli angoli e conversione in gradi
       let angleDifference = (forearmAngle - upperArmAngle) * (180 / Math.PI);
   
-      // Normalizzo l'angolo per ottenere un valore tra 0 e 180
       angleDifference = Math.abs(angleDifference);
       if (angleDifference > 180) {
         angleDifference = 360 - angleDifference;
       }
   
-      // Inverto l'angolo per ottenere 180° quando il braccio è disteso
-      let finalAngle = angleDifference;
-  
-      // Debug logging
-      console.log('📐 Current Angle:', finalAngle);
+      console.log('📐 Current Angle:', angleDifference);
       
-      return finalAngle;
-    };
+      return angleDifference;
+    }, []);
   
     const onResults = useCallback(
       (results) => {

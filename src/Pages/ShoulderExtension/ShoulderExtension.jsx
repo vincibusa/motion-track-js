@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // ShoulderExtension.jsx
 import React, { useRef, useState, useCallback } from 'react';
 import { FaAngleLeft } from "react-icons/fa";
@@ -7,7 +8,7 @@ import useCameraPermission from '../../hooks/useCameraPermission.js';
 import usePoseTracking from './hooks/usePoseTracking.js';
 import useTimer from '../../hooks/useTimer.js';
 import useFullscreen from '../../hooks/useFullScreen.js';
-import VideoCanvas from './components/VideoCanvas.jsx';
+import VideoCanvas from '../../Components/VideoCanvas.jsx';
 import TimerDisplay from './components/TimerDisplay.jsx';
 import Countdown from './components/Countdown.jsx';
 import ControlButton from './components/ControlButton.jsx';
