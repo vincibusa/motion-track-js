@@ -96,6 +96,27 @@ const usePoseTracking = ({
     return cleanup;
   }, [isTracking, setupPose]);
 
+  
+  useEffect(() => {
+    const handleResize = () => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (video && canvas) {
+        video.width = Math.min(window.innerWidth, 1280);
+        video.height = Math.min(window.innerHeight, 720);
+        canvas.width = video.width;
+        canvas.height = video.height;
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [videoRef, canvasRef]);
+
   return null;
 };
 

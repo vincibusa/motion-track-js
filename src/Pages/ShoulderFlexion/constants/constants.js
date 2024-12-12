@@ -1,0 +1,11 @@
+// POSE_LANDMARKS.js
+export const POSE_LANDMARKS = {
+    LEFT_SHOULDER: 11,
+    LEFT_ELBOW: 13,
+    LEFT_WRIST: 15,
+    LEFT_HIP: 23,
+    RIGHT_SHOULDER: 12,
+    RIGHT_ELBOW: 14,
+    RIGHT_WRIST: 16,
+    RIGHT_HIP: 24,
+  };

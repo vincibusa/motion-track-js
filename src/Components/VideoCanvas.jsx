@@ -1,13 +1,10 @@
-// VideoCanvas.jsx
-
-
-const VideoCanvas = ({ videoRef, canvasRef, isTracking }) => {
+const VideoCanvas = ({ videoRef, canvasRef }) => {
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full md:aspect-video aspect-[4/3]">
       <video
         style={{ transform: 'scaleX(-1)' }}
         ref={videoRef}
-        className="absolute inset-0 w-full h-full object-cover lg:object-contain"
+        className="absolute inset-0 w-full h-full object-cover"
         autoPlay
         playsInline
         muted
@@ -15,7 +12,7 @@ const VideoCanvas = ({ videoRef, canvasRef, isTracking }) => {
       <canvas
         style={{ transform: 'scaleX(-1)' }}
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full object-cover lg:object-contain"
+        className="absolute inset-0 w-full h-full object-cover"
       />
     </div>
   );

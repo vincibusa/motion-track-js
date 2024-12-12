@@ -1,4 +1,3 @@
-// useSetupPose.js
 import { useRef, useCallback } from 'react';
 import * as MediapipePose from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
@@ -11,8 +10,7 @@ const useSetupPose = ({ videoRef, onResults }) => {
   const setupPose = useCallback(() => {
     const video = videoRef.current;
     const pose = new MediapipePose.Pose({
-      locateFile: (file) =>
-        `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
     });
 
     pose.setOptions({
@@ -35,8 +33,8 @@ const useSetupPose = ({ videoRef, onResults }) => {
           }
         }
       },
-      width: 1280,
-      height: 720,
+      width: Math.min(window.innerWidth, 1280),
+      height: Math.min(window.innerHeight, 720),
     });
     cameraRef.current = camera;
     camera.start();

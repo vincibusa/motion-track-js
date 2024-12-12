@@ -1,10 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 // usePoseTracking.js
-import { useRef, useCallback, useEffect } from 'react';
-import * as MediapipePose from '@mediapipe/pose';
-import { Camera } from '@mediapipe/camera_utils';
+import {  useCallback, useEffect, useMemo } from 'react';
+import { POSE_LANDMARKS } from '../constants/constants';
+import useDrawLandmarks from '../../../hooks/useDrawLandmarks';
+import useSetupPose from '../../../hooks/useSetUpPose';
 import { toast } from 'react-toastify';
-import { POSE_LANDMARKS } from '../POSE_LANDMARKS';
 
 const usePoseTracking = ({
   side,
@@ -14,9 +14,15 @@ const usePoseTracking = ({
   setAngle,
   setMaxFlexion,
 }) => {
-  const poseRef = useRef(null);
-  const cameraRef = useRef(null);
-  const trackingRef = useRef(false);
+  // Memoize REQUIRED_LANDMARKS based on the side (left or right)
+  const REQUIRED_LANDMARKS = useMemo(() => {
+    return side === 'left'
+      ? [POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_ELBOW, POSE_LANDMARKS.LEFT_WRIST]
+      : [POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_ELBOW, POSE_LANDMARKS.RIGHT_WRIST];
+  }, [side]);
+
+  // Custom hook for drawing landmarks
+  const { drawLandmarks } = useDrawLandmarks(REQUIRED_LANDMARKS);
 
   // Calculate Shoulder Flexion Angle
   const calculateShoulderFlexion = (hip, shoulder, elbow) => {
@@ -44,141 +50,78 @@ const usePoseTracking = ({
     return Math.acos(dotProduct) * (180 / Math.PI);
   };
 
-  // Draw Landmarks on Canvas
-  const drawLandmarks = (landmarks, ctx, width, height, REQUIRED_LANDMARKS) => {
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 1;
-
-    ctx.beginPath();
-    REQUIRED_LANDMARKS.slice(0, -1).forEach((idx, i) => {
-      const start = landmarks[idx];
-      const end = landmarks[REQUIRED_LANDMARKS[i + 1]];
-      if (start && end) {
-        ctx.moveTo(start.x * width, start.y * height);
-        ctx.lineTo(end.x * width, end.y * height);
-      }
-    });
-    ctx.stroke();
-
-    ctx.fillStyle = '#ADD8E6';
-    REQUIRED_LANDMARKS.forEach(idx => {
-      const landmark = landmarks[idx];
-      if (landmark) {
-        ctx.beginPath();
-        ctx.arc(landmark.x * width, landmark.y * height, 2, 0, 2 * Math.PI);
-        ctx.fill();
-      }
-    });
-  };
-
-  // Handle Pose Results
+  // Pose Results Handler
   const onResults = useCallback(
-    results => {
-      if (!trackingRef.current) return;
+    (results) => {
+      if (!results.poseLandmarks) return;
 
       const canvas = canvasRef.current;
-      if (!canvas || !results.poseLandmarks) return;
+      if (!canvas) return;
 
       const ctx = canvas.getContext('2d');
       const { width, height } = canvas;
       ctx.clearRect(0, 0, width, height);
 
       const landmarks = results.poseLandmarks;
-      const REQUIRED_LANDMARKS = side === 'left'
-        ? [
-            POSE_LANDMARKS.LEFT_HIP,
-            POSE_LANDMARKS.LEFT_SHOULDER,
-            POSE_LANDMARKS.LEFT_ELBOW,
-            POSE_LANDMARKS.LEFT_WRIST
-          ]
-        : [
-            POSE_LANDMARKS.RIGHT_HIP,
-            POSE_LANDMARKS.RIGHT_SHOULDER,
-            POSE_LANDMARKS.RIGHT_ELBOW,
-            POSE_LANDMARKS.RIGHT_WRIST
-          ];
+      const [hipIdx, shoulderIdx, elbowIdx] = REQUIRED_LANDMARKS;
 
-      const allLandmarksExist = REQUIRED_LANDMARKS.every(idx => landmarks[idx]);
+      const hip = [landmarks[hipIdx].x * width, landmarks[hipIdx].y * height];
+      const shoulder = [landmarks[shoulderIdx].x * width, landmarks[shoulderIdx].y * height];
+      const elbow = [landmarks[elbowIdx].x * width, landmarks[elbowIdx].y * height];
 
-      if (allLandmarksExist) {
-        const hipIdx = REQUIRED_LANDMARKS[0];
-        const shoulderIdx = REQUIRED_LANDMARKS[1];
-        const elbowIdx = REQUIRED_LANDMARKS[2];
+      const newAngle = calculateShoulderFlexion(hip, shoulder, elbow);
+      setAngle(newAngle);
+      setMaxFlexion((prevMax) => {
+        const updatedMax = Math.max(prevMax, newAngle);
+        localStorage.setItem('maxFlexion', updatedMax.toString());
+        return updatedMax;
+      });
 
-        const hip = [landmarks[hipIdx].x * width, landmarks[hipIdx].y * height];
-        const shoulder = [landmarks[shoulderIdx].x * width, landmarks[shoulderIdx].y * height];
-        const elbow = [landmarks[elbowIdx].x * width, landmarks[elbowIdx].y * height];
-
-        const newAngle = calculateShoulderFlexion(hip, shoulder, elbow);
-        setAngle(newAngle);
-        setMaxFlexion(prevMax => {
-          const updatedMax = Math.max(prevMax, newAngle);
-          localStorage.setItem('maxFlexion', updatedMax.toString());
-          return updatedMax;
+      const alignmentAngle = checkPositionAlignment(hip, shoulder);
+      const tolerance = 30;
+      if (alignmentAngle > tolerance) {
+        toast.error("Incorrect position! Please align your shoulder perpendicular to the ground.", {
+          position: "top-right",
+          autoClose: 3000,
+          draggable: true,
         });
-
-        const alignmentAngle = checkPositionAlignment(hip, shoulder);
-        const tolerance = 30;
-        if (alignmentAngle > tolerance) {
-          toast.error("Incorrect position! Please align your shoulder perpendicular to the ground.", {
-            position: "top-right",
-            autoClose: 3000,
-            draggable: true,
-          });
-        }
-
-        drawLandmarks(landmarks, ctx, width, height, REQUIRED_LANDMARKS);
       }
+
+      drawLandmarks(landmarks, ctx, width, height);
     },
-    [side, setAngle, setMaxFlexion, canvasRef]
+    []
   );
 
-  const setupPose = useCallback(() => {
-    const video = videoRef.current;
-    const pose = new MediapipePose.Pose({
-      locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
-    });
-
-    pose.setOptions({
-      modelComplexity: 1,
-      smoothLandmarks: true,
-      minDetectionConfidence: 0.7,
-      minTrackingConfidence: 0.7,
-      enableSegmentation: false,
-    });
-
-    pose.onResults(onResults);
-    poseRef.current = pose;
-
-    const camera = new Camera(video, {
-      onFrame: async () => {
-        if (trackingRef.current && poseRef.current) {
-          try {
-            await poseRef.current.send({ image: video });
-          } catch (error) {
-            console.error("Error sending frame to pose:", error);
-          }
-        }
-      },
-      width: 1280,
-      height: 720,
-    });
-    cameraRef.current = camera;
-    camera.start();
-  }, [onResults]);
+  // Custom hook for setting up the pose detection
+  const { setupPose, cleanup, trackingRef } = useSetupPose({ videoRef, onResults });
 
   useEffect(() => {
     if (isTracking) {
       trackingRef.current = true;
       setupPose();
     }
-    return () => {
-      trackingRef.current = false;
-      cameraRef.current?.stop();
-      poseRef.current?.close();
-      poseRef.current = null;
+    return cleanup;
+  }, [isTracking, setupPose, ]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (video && canvas) {
+        video.width = Math.min(window.innerWidth, 1280);
+        video.height = Math.min(window.innerHeight, 720);
+        canvas.width = video.width;
+        canvas.height = video.height;
+      }
     };
-  }, [isTracking, setupPose]);
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [videoRef, canvasRef]);
 
   return null;
 };
