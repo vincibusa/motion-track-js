@@ -9,10 +9,10 @@ import usePoseTracking from './hooks/usePoseTracking.js';
 import useTimer from '../../hooks/useTimer.js';
 import useFullscreen from '../../hooks/useFullScreen.js';
 import VideoCanvas from '../../Components/VideoCanvas.jsx';
-import TimerDisplay from './components/TimerDisplay.jsx';
-import Countdown from './components/Countdown.jsx';
-import ControlButton from './components/ControlButton.jsx';
-import Summary from './components/Summary.jsx';
+import TimerDisplay from '../../Components/TimerDisplay.jsx';
+import Countdown from '../../Components/Countdown.jsx';
+import ControlButton from '../../Components/ControlButton.jsx';
+import Summary from '../../Components/Summary.jsx';
 import 'react-toastify/dist/ReactToastify.css';
 
 const ShoulderFlexion = ({ side = 'left' }) => {

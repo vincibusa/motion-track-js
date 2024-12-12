@@ -12,14 +12,14 @@ const usePoseTracking = ({
   canvasRef,
   videoRef,
   setAngle,
-  setMaxExtension,
+  setMaxFlexion,
 }) => {
   const poseRef = useRef(null);
   const cameraRef = useRef(null);
   const trackingRef = useRef(false);
 
-  // Calculate Shoulder Extension Angle
-  const calculateShoulderExtension = (hip, shoulder, elbow) => {
+  // Calculate Shoulder Flexion Angle
+  const calculateShoulderFlexion = (hip, shoulder, elbow) => {
     const hipToShoulder = [shoulder[0] - hip[0], shoulder[1] - hip[1]];
     const shoulderToElbow = [elbow[0] - shoulder[0], elbow[1] - shoulder[1]];
 
@@ -30,12 +30,12 @@ const usePoseTracking = ({
     const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
     let angleDegrees = (Math.acos(cosAngle) * 180) / Math.PI;
 
-    return angleDegrees;
+    return 180 - angleDegrees;
   };
 
   // Check Shoulder Alignment
   const checkPositionAlignment = (hip, shoulder) => {
-    const idealDirection = [0, 1]; // Direction for shoulder alignment in extension
+    const idealDirection = [0, -1];
     const hipToShoulder = [shoulder[0] - hip[0], shoulder[1] - hip[1]];
     const length = Math.hypot(...hipToShoulder);
     const unitHipToShoulder = hipToShoulder.map(coord => coord / length);
@@ -47,7 +47,7 @@ const usePoseTracking = ({
   // Draw Landmarks on Canvas
   const drawLandmarks = (landmarks, ctx, width, height, REQUIRED_LANDMARKS) => {
     ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
 
     ctx.beginPath();
     REQUIRED_LANDMARKS.slice(0, -1).forEach((idx, i) => {
@@ -65,7 +65,7 @@ const usePoseTracking = ({
       const landmark = landmarks[idx];
       if (landmark) {
         ctx.beginPath();
-        ctx.arc(landmark.x * width, landmark.y * height, 5, 0, 2 * Math.PI);
+        ctx.arc(landmark.x * width, landmark.y * height, 2, 0, 2 * Math.PI);
         ctx.fill();
       }
     });
@@ -109,18 +109,18 @@ const usePoseTracking = ({
         const shoulder = [landmarks[shoulderIdx].x * width, landmarks[shoulderIdx].y * height];
         const elbow = [landmarks[elbowIdx].x * width, landmarks[elbowIdx].y * height];
 
-        const newAngle = calculateShoulderExtension(hip, shoulder, elbow);
+        const newAngle = calculateShoulderFlexion(hip, shoulder, elbow);
         setAngle(newAngle);
-        setMaxExtension(prevMax => {
+        setMaxFlexion(prevMax => {
           const updatedMax = Math.max(prevMax, newAngle);
-          localStorage.setItem('maxExtension', updatedMax.toString());
+          localStorage.setItem('maxFlexion', updatedMax.toString());
           return updatedMax;
         });
 
         const alignmentAngle = checkPositionAlignment(hip, shoulder);
         const tolerance = 30;
         if (alignmentAngle > tolerance) {
-          toast.error("Incorrect position! Please align your shoulder parallel to the ground.", {
+          toast.error("Incorrect position! Please align your shoulder perpendicular to the ground.", {
             position: "top-right",
             autoClose: 3000,
             draggable: true,
@@ -130,7 +130,7 @@ const usePoseTracking = ({
         drawLandmarks(landmarks, ctx, width, height, REQUIRED_LANDMARKS);
       }
     },
-    [side, setAngle, setMaxExtension, canvasRef]
+    [side, setAngle, setMaxFlexion, canvasRef]
   );
 
   const setupPose = useCallback(() => {
@@ -142,8 +142,8 @@ const usePoseTracking = ({
     pose.setOptions({
       modelComplexity: 1,
       smoothLandmarks: true,
-      minDetectionConfidence: 0.6,
-      minTrackingConfidence: 0.6,
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.7,
       enableSegmentation: false,
     });
 

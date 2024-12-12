@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-// ShoulderExtension.jsx
+// ShoulderFlexion.jsx
 import React, { useRef, useState, useCallback } from 'react';
 import { FaAngleLeft } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
@@ -9,13 +9,13 @@ import usePoseTracking from './hooks/usePoseTracking.js';
 import useTimer from '../../hooks/useTimer.js';
 import useFullscreen from '../../hooks/useFullScreen.js';
 import VideoCanvas from '../../Components/VideoCanvas.jsx';
-import TimerDisplay from './components/TimerDisplay.jsx';
-import Countdown from './components/Countdown.jsx';
-import ControlButton from './components/ControlButton.jsx';
-import Summary from './components/Summary.jsx';
+import TimerDisplay from '../../Components/TimerDisplay.jsx';
+import Countdown from '../../Components/Countdown.jsx';
+import ControlButton from '../../Components/ControlButton.jsx';
+import Summary from '../../Components/Summary.jsx';
 import 'react-toastify/dist/ReactToastify.css';
 
-const ShoulderExtension = ({ side = 'left' }) => {
+const ShoulderFlexion = ({ side = 'left' }) => {
   // Refs
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -26,7 +26,7 @@ const ShoulderExtension = ({ side = 'left' }) => {
 
   // State
   const [angle, setAngle] = useState(0);
-  const [maxExtension, setMaxExtension] = useState(0);
+  const [maxFlexion, setMaxFlexion] = useState(0);
   const [isTracking, setIsTracking] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [isCountdownActive, setIsCountdownActive] = useState(false);
@@ -48,7 +48,7 @@ const ShoulderExtension = ({ side = 'left' }) => {
     canvasRef,
     videoRef,
     setAngle,
-    setMaxExtension,
+    setMaxFlexion,
   });
 
   // Handle Start Button
@@ -76,12 +76,12 @@ const ShoulderExtension = ({ side = 'left' }) => {
     }, 1000);
   };
 
-  // Classify Extension
-  const classifyExtension = angle => {
-    if (angle <= 20) return "Poor mobility";
-    if (angle <= 40) return "Fair";
-    if (angle <= 60) return "Good";
-    if (angle <= 70) return "Excellent";
+  // Classify Flexion
+  const classifyFlexion = angle => {
+    if (angle <= 100) return "Poor mobility";
+    if (angle <= 130) return "Fair";
+    if (angle <= 170) return "Good";
+    if (angle <= 180) return "Excellent";
     return "Invalid";
   };
 
@@ -112,11 +112,11 @@ const ShoulderExtension = ({ side = 'left' }) => {
 
       <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center space-x-4 z-50">
         {isTracking && (
-          <Summary maxExtension={maxExtension} classifyFlexion={classifyExtension} />
+          <Summary maxFlexion={maxFlexion} classifyFlexion={classifyFlexion} />
         )}
       </div>
     </div>
   );
 };
 
-export default ShoulderExtension;
+export default ShoulderFlexion;
