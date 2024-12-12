@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { FaHome, FaRedoAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
