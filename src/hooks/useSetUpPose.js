@@ -16,8 +16,8 @@ const useSetupPose = ({ videoRef, onResults }) => {
     pose.setOptions({
       modelComplexity: 1,
       smoothLandmarks: true,
-      minDetectionConfidence: 0.7,
-      minTrackingConfidence: 0.7,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5,
       enableSegmentation: false,
     });
     pose.onResults(onResults);
