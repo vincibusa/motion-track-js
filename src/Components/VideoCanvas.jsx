@@ -8,6 +8,11 @@ const VideoCanvas = ({ videoRef, canvasRef }) => {
         autoPlay
         playsInline
         muted
+        // Add these attributes for better mobile support
+        webkit-playsinline="true"
+        x5-playsinline="true"
+        x5-video-player-type="h5"
+        x5-video-player-fullscreen="true"
       />
       <canvas
         style={{ transform: 'scaleX(-1)' }}

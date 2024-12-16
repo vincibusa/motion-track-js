@@ -13,14 +13,50 @@ const usePoseTracking = ({
   setMaxFlexion,
   validateRepetition,
 }) => {
+  // Definiamo le connessioni per ogni lato
+  const landmarkConnections = useMemo(() => ({
+    leftSide: [
+      // Braccio sinistro
+      [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_ELBOW],
+      [POSE_LANDMARKS.LEFT_ELBOW, POSE_LANDMARKS.LEFT_WRIST],
+      // Connessione spalla-anca
+      [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_HIP],
+    ],
+    rightSide: [
+      // Braccio destro
+      [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_ELBOW],
+      [POSE_LANDMARKS.RIGHT_ELBOW, POSE_LANDMARKS.RIGHT_WRIST],
+      // Connessione spalla-anca
+      [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_HIP],
+    ]
+  }), []);
+
+  // Manteniamo REQUIRED_LANDMARKS per il calcolo degli angoli
   const REQUIRED_LANDMARKS = useMemo(() =>
     side === 'left'
-      ? [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_ELBOW, POSE_LANDMARKS.LEFT_WRIST]
-      : [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_ELBOW, POSE_LANDMARKS.RIGHT_WRIST],
+      ? [
+          POSE_LANDMARKS.LEFT_SHOULDER,
+          POSE_LANDMARKS.LEFT_ELBOW,
+          POSE_LANDMARKS.LEFT_WRIST,
+          POSE_LANDMARKS.LEFT_HIP
+        ]
+      : [
+          POSE_LANDMARKS.RIGHT_SHOULDER,
+          POSE_LANDMARKS.RIGHT_ELBOW,
+          POSE_LANDMARKS.RIGHT_WRIST,
+          POSE_LANDMARKS.RIGHT_HIP
+        ],
     [side]
   );
 
-  const { drawLandmarks } = useDrawLandmarks(REQUIRED_LANDMARKS);
+  // Usiamo il nuovo hook con le connessioni appropriate
+  const { drawLandmarks } = useDrawLandmarks(
+    // Passiamo solo le connessioni del lato che ci interessa
+    {
+      leftSide: side === 'left' ? landmarkConnections.leftSide : [],
+      rightSide: side === 'right' ? landmarkConnections.rightSide : []
+    }
+  );
 
   const calculateArmAngle = useCallback((shoulder, elbow, wrist) => {
     const upperArm = {
@@ -45,6 +81,25 @@ const usePoseTracking = ({
     return angleDifference;
   }, []);
 
+  const calculateShoulderHipAngle = useCallback((shoulder, hip) => {
+    const verticalVector = { x: 0, y: 1 };
+    
+    const shoulderHipVector = {
+      x: hip[0] - shoulder[0],
+      y: hip[1] - shoulder[1],
+    };
+
+    const dotProduct = (shoulderHipVector.x * verticalVector.x) + 
+                      (shoulderHipVector.y * verticalVector.y);
+    const shoulderHipMagnitude = Math.sqrt(
+      shoulderHipVector.x * shoulderHipVector.x + 
+      shoulderHipVector.y * shoulderHipVector.y
+    );
+
+    const angle = Math.acos(dotProduct / shoulderHipMagnitude) * (180 / Math.PI);
+    return angle;
+  }, []);
+
   const onResults = useCallback(
     (results) => {
       if (!trackingRef.current) return;
@@ -56,7 +111,7 @@ const usePoseTracking = ({
       ctx.clearRect(0, 0, width, height);
 
       const landmarks = results.poseLandmarks;
-      const [shoulderIndex, elbowIndex, wristIndex] = REQUIRED_LANDMARKS;
+      const [shoulderIndex, elbowIndex, wristIndex, hipIndex] = REQUIRED_LANDMARKS;
 
       const shoulder = [
         landmarks[shoulderIndex].x * width,
@@ -70,10 +125,16 @@ const usePoseTracking = ({
         landmarks[wristIndex].x * width,
         landmarks[wristIndex].y * height,
       ];
+      const hip = [
+        landmarks[hipIndex].x * width,
+        landmarks[hipIndex].y * height,
+      ];
 
       const armAngle = calculateArmAngle(shoulder, elbow, wrist);
+      const shoulderHipAngle = calculateShoulderHipAngle(shoulder, hip);
+      
       setAngle(armAngle);
-      validateRepetition(armAngle);
+      validateRepetition(armAngle, shoulderHipAngle);
 
       setMaxFlexion((prevMax) => {
         const updatedMax = Math.min(prevMax, armAngle);

@@ -14,6 +14,20 @@ const usePoseTracking = ({
   setMaxFlexion,
   validateRepetition,
 }) => {
+
+  const landmarkConnections = useMemo(() => ({
+    leftSide: [
+      [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_HIP],
+      [POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_KNEE],
+      [POSE_LANDMARKS.LEFT_KNEE, POSE_LANDMARKS.LEFT_ANKLE],
+    ],
+    rightSide: [
+      [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_HIP],
+      [POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_KNEE],
+      [POSE_LANDMARKS.RIGHT_KNEE, POSE_LANDMARKS.RIGHT_ANKLE],
+    ]
+  }), []);
+
   const REQUIRED_LANDMARKS = useMemo(() => 
     side === 'left'
       ? [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_KNEE, POSE_LANDMARKS.LEFT_ANKLE]
@@ -22,7 +36,13 @@ const usePoseTracking = ({
   );
 
 
-  const { drawLandmarks } = useDrawLandmarks(REQUIRED_LANDMARKS);
+  const { drawLandmarks } = useDrawLandmarks(
+    // Passiamo solo le connessioni del lato che ci interessa
+    {
+      leftSide: side === 'left' ? landmarkConnections.leftSide : [],
+      rightSide: side === 'right' ? landmarkConnections.rightSide : []
+    }
+  );
 
   const calculateSquatAngle = useCallback((hip, knee, ankle) => {
     const hipToKnee = [knee[0] - hip[0], knee[1] - hip[1]];

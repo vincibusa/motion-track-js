@@ -14,6 +14,20 @@ const usePoseTracking = ({
   setAngle,
   setMaxFlexion,
 }) => {
+
+  const landmarkConnections = useMemo(() => ({
+    leftSide: [
+      [POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_SHOULDER],
+      [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_ELBOW],
+      [POSE_LANDMARKS.LEFT_ELBOW, POSE_LANDMARKS.LEFT_WRIST]
+    ],
+    rightSide: [
+      [POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_SHOULDER],
+      [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_ELBOW],
+      [POSE_LANDMARKS.RIGHT_ELBOW, POSE_LANDMARKS.RIGHT_WRIST]
+    ]
+  }), []);
+
   // Memoize REQUIRED_LANDMARKS based on the side (left or right)
   const REQUIRED_LANDMARKS = useMemo(() => {
     return side === 'left'
@@ -22,7 +36,13 @@ const usePoseTracking = ({
   }, [side]);
 
   // Custom hook for drawing landmarks
-  const { drawLandmarks } = useDrawLandmarks(REQUIRED_LANDMARKS);
+  const { drawLandmarks } = useDrawLandmarks(
+    // Passiamo solo le connessioni del lato che ci interessa
+    {
+      leftSide: side === 'left' ? landmarkConnections.leftSide : [],
+      rightSide: side === 'right' ? landmarkConnections.rightSide : []
+    }
+  );
 
   // Calculate Shoulder Flexion Angle
   const calculateShoulderFlexion = (hip, shoulder, elbow) => {
