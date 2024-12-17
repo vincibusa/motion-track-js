@@ -7,8 +7,8 @@ export const STAGES = {
 
 export const STAGE_RANGES = {
   [STAGES.STAGE1]: { min: 0, max: 40 }, // Braccio quasi completamente disteso
-  [STAGES.STAGE2]: { min: 41, max: 59 },  // Fase intermedia
-  [STAGES.STAGE3]: { min: 60, max: 200 },   // Curl completo
+  [STAGES.STAGE2]: { min: 40, max: 110 },  // Fase intermedia
+  [STAGES.STAGE3]: { min: 110, max: 180 },   // Curl completo
 };
 
 export const POSE_LANDMARKS = {
