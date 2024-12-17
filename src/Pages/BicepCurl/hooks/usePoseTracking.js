@@ -102,6 +102,28 @@ const usePoseTracking = ({
     return Math.sqrt(dx * dx + dy * dy);
   }, []);
 
+  // Nuova funzione per calcolare l'angolo gomito-torso
+  const calculateElbowTorsoAngle = useCallback((shoulder, hip, elbow) => {
+    // Calcola l'angolo tra la linea spalla-anca e la linea spalla-gomito
+    const shoulderToHip = {
+      x: hip[0] - shoulder[0],
+      y: hip[1] - shoulder[1],
+    };
+
+    const shoulderToElbow = {
+      x: elbow[0] - shoulder[0],
+      y: elbow[1] - shoulder[1],
+    };
+
+    const dotProduct = (shoulderToHip.x * shoulderToElbow.x) + 
+                      (shoulderToHip.y * shoulderToElbow.y);
+    const magnitudeSpine = Math.sqrt(shoulderToHip.x ** 2 + shoulderToHip.y ** 2);
+    const magnitudeArm = Math.sqrt(shoulderToElbow.x ** 2 + shoulderToElbow.y ** 2);
+
+    const angle = Math.acos(dotProduct / (magnitudeSpine * magnitudeArm)) * (180 / Math.PI);
+    return angle;
+  }, []);
+
   const onResults = useCallback(
     (results) => {
       if (!trackingRef.current) return;
@@ -139,10 +161,11 @@ const usePoseTracking = ({
       const armAngle = calculateArmAngle(shoulder, elbow, wrist);
       const shoulderHipAngle = calculateShoulderHipAngle(shoulder, hip);
       const shoulderEarDistance = calculateShoulderEarDistance(shoulder, ear);
+      const elbowTorsoAngle = calculateElbowTorsoAngle(shoulder, hip, elbow);
 
       setAngle(armAngle);
-      // Passiamo sia gli angoli che la distanza a validateRepetition
-      validateRepetition(armAngle, shoulderHipAngle, shoulderEarDistance);
+      // Passiamo gli angoli e la distanza a validateRepetition
+      validateRepetition(armAngle, shoulderHipAngle, shoulderEarDistance, elbowTorsoAngle);
 
       setMaxFlexion((prevMax) => {
         const updatedMax = Math.min(prevMax, armAngle);

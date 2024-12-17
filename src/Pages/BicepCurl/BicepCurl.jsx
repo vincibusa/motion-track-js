@@ -64,7 +64,7 @@ const BicepCurl = ({ side = 'left' }) => {
     videoRef,
     setAngle,
     setMaxFlexion,
-    validateRepetition,
+    validateRepetition, // Passiamo la funzione aggiornata
   });
 
   useEffect(() => {
