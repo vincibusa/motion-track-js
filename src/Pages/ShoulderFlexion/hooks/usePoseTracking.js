@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 // usePoseTracking.js
-import {  useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { POSE_LANDMARKS } from '../constants/constants';
 import useDrawLandmarks from '../../../hooks/useDrawLandmarks';
 import useSetupPose from '../../../hooks/useSetUpPose';
@@ -28,24 +28,25 @@ const usePoseTracking = ({
     ]
   }), []);
 
-  // Memoize REQUIRED_LANDMARKS based on the side (left or right)
   const REQUIRED_LANDMARKS = useMemo(() => {
     return side === 'left'
       ? [POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_ELBOW, POSE_LANDMARKS.LEFT_WRIST]
       : [POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_ELBOW, POSE_LANDMARKS.RIGHT_WRIST];
   }, [side]);
 
-  // Custom hook for drawing landmarks
   const { drawLandmarks } = useDrawLandmarks(
-    // Passiamo solo le connessioni del lato che ci interessa
     {
       leftSide: side === 'left' ? landmarkConnections.leftSide : [],
       rightSide: side === 'right' ? landmarkConnections.rightSide : []
     }
   );
 
-  // Calculate Shoulder Flexion Angle
-  const calculateShoulderFlexion = (hip, shoulder, elbow) => {
+  // Riferimenti per tracciare la visualizzazione dei toast
+  const hasShownPositiveAngleToast = useRef(false);
+  const hasShownAlignmentToast = useRef(false);
+
+  // Funzione aggiornata per calcolare l'angolo con segno
+  const calculateShoulderFlexion = useCallback((hip, shoulder, elbow) => {
     const hipToShoulder = [shoulder[0] - hip[0], shoulder[1] - hip[1]];
     const shoulderToElbow = [elbow[0] - shoulder[0], elbow[1] - shoulder[1]];
 
@@ -53,24 +54,26 @@ const usePoseTracking = ({
     const magnitude1 = Math.hypot(...hipToShoulder);
     const magnitude2 = Math.hypot(...shoulderToElbow);
 
-    const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
-    let angleDegrees = (Math.acos(cosAngle) * 180) / Math.PI;
+    let angleRadians = Math.acos(Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1));
 
-    return 180 - angleDegrees;
-  };
+    const crossProduct = hipToShoulder[0] * shoulderToElbow[1] - hipToShoulder[1] * shoulderToElbow[0];
+    const sign = crossProduct < 0 ? -1 : 1;
 
-  // Check Shoulder Alignment
-  const checkPositionAlignment = (hip, shoulder) => {
+    const angleDegrees = (angleRadians * 180) / Math.PI;
+    console.log(angleDegrees * sign);
+    return angleDegrees * sign;
+  }, []);
+
+  const checkPositionAlignment = useCallback((hip, shoulder) => {
     const idealDirection = [0, -1];
     const hipToShoulder = [shoulder[0] - hip[0], shoulder[1] - hip[1]];
     const length = Math.hypot(...hipToShoulder);
     const unitHipToShoulder = hipToShoulder.map(coord => coord / length);
 
     const dotProduct = idealDirection[0] * unitHipToShoulder[0] + idealDirection[1] * unitHipToShoulder[1];
-    return Math.acos(dotProduct) * (180 / Math.PI);
-  };
+    return Math.acos(Math.min(Math.max(dotProduct, -1), 1)) * (180 / Math.PI);
+  }, []);
 
-  // Pose Results Handler
   const onResults = useCallback(
     (results) => {
       if (!results.poseLandmarks) return;
@@ -92,27 +95,49 @@ const usePoseTracking = ({
       const newAngle = calculateShoulderFlexion(hip, shoulder, elbow);
       setAngle(newAngle);
       setMaxFlexion((prevMax) => {
-        const updatedMax = Math.max(prevMax, newAngle);
+        const updatedMax = Math.max(prevMax, Math.abs(newAngle));
         localStorage.setItem('maxFlexion', updatedMax.toString());
         return updatedMax;
       });
 
+      // Mostra toast se l'angolo è positivo e non è già stato mostrato
+      if (newAngle > 0) {
+        if (!hasShownPositiveAngleToast.current) {
+          toast.error("Esecuzione esercizio scorretta", {
+            position: "top-center",
+            autoClose: 3000,
+            draggable: true,
+          });
+          hasShownPositiveAngleToast.current = true;
+        }
+      } else {
+        // Reset del flag quando l'angolo non è più positivo
+        hasShownPositiveAngleToast.current = false;
+      }
+
       const alignmentAngle = checkPositionAlignment(hip, shoulder);
       const tolerance = 30;
       if (alignmentAngle > tolerance) {
-        toast.error("Incorrect position! Please align your shoulder perpendicular to the ground.", {
-          position: "top-right",
-          autoClose: 3000,
-          draggable: true,
-        });
+        if (!hasShownAlignmentToast.current) {
+          toast.error("Posizione scorretta! Per favore allinea la tua spalla perpendicolarmente al terreno.", {
+            position: "top-center",
+            autoClose: 3000,
+            draggable: true,
+          });
+          hasShownAlignmentToast.current = true;
+        }
+      } else {
+        // Reset del flag quando l'allineamento è corretto
+        hasShownAlignmentToast.current = false;
       }
 
       drawLandmarks(landmarks, ctx, width, height);
     },
-    []
+    [
+    
+    ]
   );
 
-  // Custom hook for setting up the pose detection
   const { setupPose, cleanup, trackingRef } = useSetupPose({ videoRef, onResults });
 
   useEffect(() => {
@@ -121,7 +146,7 @@ const usePoseTracking = ({
       setupPose();
     }
     return cleanup;
-  }, [isTracking, setupPose, ]);
+  }, [isTracking, setupPose,]);
 
   useEffect(() => {
     const handleResize = () => {
