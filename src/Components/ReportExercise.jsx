@@ -13,6 +13,7 @@ const ReportExercise = ({ flexionValue }) => {
   const validReps = localStorage.getItem("validReps");
   const invalidReps = localStorage.getItem("invalidReps");
   const [textFeedback, setTextFeedback] = useState('');
+  const name = localStorage.getItem("name");
 
   const submitFeedback = async () => {
     if (!selectedFeedback) return alert("Per favore, seleziona un feedback.");
@@ -28,6 +29,7 @@ const ReportExercise = ({ flexionValue }) => {
 
   useEffect(() => {
     const savedMaxFlexion = localStorage.getItem("maxFlexion");
+  
     if (savedMaxFlexion) {
       setMaxFlexion(parseFloat(savedMaxFlexion));
     }
@@ -44,7 +46,7 @@ const ReportExercise = ({ flexionValue }) => {
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md transition-all duration-300 transform hover:shadow-xl">
         <div className="text-center space-y-6">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-            Report di Flessione del Ginocchio
+           {name}
           </h2>
 
           <div

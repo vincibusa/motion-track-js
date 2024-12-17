@@ -176,6 +176,7 @@ const Squat = ({ side = 'left' }) => {
       localStorage.setItem('totalReps', totalReps.toString());
       localStorage.setItem('validReps', validReps.toString());
       localStorage.setItem('invalidReps', invalidReps.toString());
+      localStorage.setItem('name', "Report Squat");
       setTimeout(() => {
         navigate('/report-exercise');
       }, 500);

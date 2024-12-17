@@ -77,7 +77,9 @@ const BicepCurl = ({ side = 'left' }) => {
       localStorage.setItem('totalReps', totalReps.toString());
       localStorage.setItem('validReps', validReps.toString());
       localStorage.setItem('invalidReps', invalidReps.toString());
+      localStorage.setItem('name', "Report Bicep Curl");
       setTimeout(() => {
+        
         navigate('/report-exercise');
       }, 500);
     }

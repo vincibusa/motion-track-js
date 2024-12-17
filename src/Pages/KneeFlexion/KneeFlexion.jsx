@@ -78,6 +78,7 @@ const KneeFlexion = ({ side = 'left' }) => {
       localStorage.setItem('totalReps', totalReps.toString());
       localStorage.setItem('validReps', validReps.toString());
       localStorage.setItem('invalidReps', invalidReps.toString());
+      localStorage.setItem('name', "Flessione del ginocchio");
       setTimeout(() => {
         navigate('/report-exercise');
       }, 500);

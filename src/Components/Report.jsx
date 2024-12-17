@@ -8,6 +8,7 @@ const Report = ({ flexionValue }) => {
   const [selectedFeedback, setSelectedFeedback] = useState(null); // Stato per il feedback selezionato
   const startDate = localStorage.getItem("startDate");
   const navigate = useNavigate();
+  const name = localStorage.getItem("name");
 
   useEffect(() => {
     const savedMaxFlexion = localStorage.getItem("maxFlexion");
@@ -45,7 +46,7 @@ const Report = ({ flexionValue }) => {
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md transition-all duration-300 transform hover:shadow-xl">
         <div className="text-center space-y-6">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-            Report di Flessione della Spalla
+           {name}
           </h2>
 
           <div

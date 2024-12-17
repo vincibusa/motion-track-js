@@ -37,6 +37,7 @@ const ShoulderFlexion = ({ side = 'left' }) => {
 
   const handleExpire = useCallback(() => {
     setIsTracking(false);
+    localStorage.setItem('name', "Report Flessione Spalla");
     setTimeout(() => navigate('/report'), 500);
   }, [navigate]);
 
