@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+/* hooks/usePoseTracking.js */
 import { useCallback, useEffect, useMemo } from 'react';
 import { POSE_LANDMARKS } from '../constants/constants';
 import useDrawLandmarks from '../../../hooks/useDrawLandmarks';
@@ -11,22 +12,18 @@ const usePoseTracking = ({
   videoRef,
   setAngle,
   setMaxFlexion,
-  validateRepetition,
+  validateRepetition, // Funzione aggiornata per includere la distanza
 }) => {
   // Definiamo le connessioni per ogni lato
   const landmarkConnections = useMemo(() => ({
     leftSide: [
-      // Braccio sinistro
       [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_ELBOW],
       [POSE_LANDMARKS.LEFT_ELBOW, POSE_LANDMARKS.LEFT_WRIST],
-      // Connessione spalla-anca
       [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_HIP],
     ],
     rightSide: [
-      // Braccio destro
       [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_ELBOW],
       [POSE_LANDMARKS.RIGHT_ELBOW, POSE_LANDMARKS.RIGHT_WRIST],
-      // Connessione spalla-anca
       [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_HIP],
     ]
   }), []);
@@ -38,25 +35,24 @@ const usePoseTracking = ({
           POSE_LANDMARKS.LEFT_SHOULDER,
           POSE_LANDMARKS.LEFT_ELBOW,
           POSE_LANDMARKS.LEFT_WRIST,
-          POSE_LANDMARKS.LEFT_HIP
+          POSE_LANDMARKS.LEFT_HIP,
+          POSE_LANDMARKS.LEFT_EAR, // Aggiunto l'orecchio sinistro
         ]
       : [
           POSE_LANDMARKS.RIGHT_SHOULDER,
           POSE_LANDMARKS.RIGHT_ELBOW,
           POSE_LANDMARKS.RIGHT_WRIST,
-          POSE_LANDMARKS.RIGHT_HIP
+          POSE_LANDMARKS.RIGHT_HIP,
+          POSE_LANDMARKS.RIGHT_EAR, // Aggiunto l'orecchio destro
         ],
     [side]
   );
 
   // Usiamo il nuovo hook con le connessioni appropriate
-  const { drawLandmarks } = useDrawLandmarks(
-    // Passiamo solo le connessioni del lato che ci interessa
-    {
-      leftSide: side === 'left' ? landmarkConnections.leftSide : [],
-      rightSide: side === 'right' ? landmarkConnections.rightSide : []
-    }
-  );
+  const { drawLandmarks } = useDrawLandmarks({
+    leftSide: side === 'left' ? landmarkConnections.leftSide : [],
+    rightSide: side === 'right' ? landmarkConnections.rightSide : []
+  });
 
   const calculateArmAngle = useCallback((shoulder, elbow, wrist) => {
     const upperArm = {
@@ -100,6 +96,12 @@ const usePoseTracking = ({
     return angle;
   }, []);
 
+  const calculateShoulderEarDistance = useCallback((shoulder, ear) => {
+    const dx = ear[0] - shoulder[0];
+    const dy = ear[1] - shoulder[1];
+    return Math.sqrt(dx * dx + dy * dy);
+  }, []);
+
   const onResults = useCallback(
     (results) => {
       if (!trackingRef.current) return;
@@ -111,7 +113,7 @@ const usePoseTracking = ({
       ctx.clearRect(0, 0, width, height);
 
       const landmarks = results.poseLandmarks;
-      const [shoulderIndex, elbowIndex, wristIndex, hipIndex] = REQUIRED_LANDMARKS;
+      const [shoulderIndex, elbowIndex, wristIndex, hipIndex, earIndex] = REQUIRED_LANDMARKS;
 
       const shoulder = [
         landmarks[shoulderIndex].x * width,
@@ -129,12 +131,18 @@ const usePoseTracking = ({
         landmarks[hipIndex].x * width,
         landmarks[hipIndex].y * height,
       ];
+      const ear = [
+        landmarks[earIndex].x * width,
+        landmarks[earIndex].y * height,
+      ];
 
       const armAngle = calculateArmAngle(shoulder, elbow, wrist);
       const shoulderHipAngle = calculateShoulderHipAngle(shoulder, hip);
-      
+      const shoulderEarDistance = calculateShoulderEarDistance(shoulder, ear);
+
       setAngle(armAngle);
-      validateRepetition(armAngle, shoulderHipAngle);
+      // Passiamo sia gli angoli che la distanza a validateRepetition
+      validateRepetition(armAngle, shoulderHipAngle, shoulderEarDistance);
 
       setMaxFlexion((prevMax) => {
         const updatedMax = Math.min(prevMax, armAngle);

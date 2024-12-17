@@ -1,4 +1,4 @@
-// hooks/useRepValidation.js
+/* hooks/useRepValidation.js */
 import { useState, useRef, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { STAGES, STAGE_RANGES } from '../constants/constants';
@@ -7,15 +7,18 @@ const useRepValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
   const [currentStage, setCurrentStage] = useState(null);
   const [stageSequence, setStageSequence] = useState([]);
   const lastToastTimeRef = useRef(0);
-  const lastPostureWarningRef = useRef(0);
-  const isPostureWarningActiveRef = useRef(false);
+  
+  // Nuovi riferimenti per la gestione del cheating
+  const initialDistanceRef = useRef(null);
+  const lastCheatingWarningRef = useRef(0);
+  const isCheatingRef = useRef(false);
 
-  const showToastIfAllowed = (message, type) => {
+  const showToastIfAllowed = (message, type, autoClose = 1000) => {
     const currentTime = Date.now();
     if (currentTime - lastToastTimeRef.current >= 1000) {
       toast[type](message, {
         position: "top-center",
-        autoClose: 1000,
+        autoClose: autoClose,
       });
       lastToastTimeRef.current = currentTime;
     }
@@ -48,26 +51,34 @@ const useRepValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
   };
 
   const validateRepetition = useCallback(
-    (currentAngle, shoulderHipAngle) => {
+    (currentAngle, shoulderHipAngle, shoulderEarDistance) => {
       console.log('📐 Current Angle:', currentAngle);
       console.log('📐 Shoulder-Hip Angle:', shoulderHipAngle);
+      console.log('📐 Shoulder-Ear Distance:', shoulderEarDistance);
 
       const currentTime = Date.now();
 
-      // Gestione warning postura
-      if (shoulderHipAngle > 20) {
-        if (!isPostureWarningActiveRef.current || 
-            currentTime - lastPostureWarningRef.current >= 2000) {
-          toast.warning('Correggere la postura! L\'angolo tra spalla e anca deve essere minore di 30 gradi', {
-            position: "top-center",
-            autoClose: 2000,
-          });
-          lastPostureWarningRef.current = currentTime;
-          isPostureWarningActiveRef.current = true;
-        }
-        return;
+      // Gestione warning postura (Cheating)
+      if (initialDistanceRef.current === null) {
+        // Imposta la distanza iniziale al primo frame
+        initialDistanceRef.current = shoulderEarDistance;
       } else {
-        isPostureWarningActiveRef.current = false;
+        const distanceThreshold = initialDistanceRef.current * 0.8; // 20% di diminuzione
+        if (shoulderEarDistance < distanceThreshold && !isCheatingRef.current) {
+          isCheatingRef.current = true;
+          if (currentTime - lastCheatingWarningRef.current >= 2000) { // Evita spam di toast
+            showToastIfAllowed('Deprimere la scapola! Abbassa la spalla per correggere la postura.', 'warning', 2000);
+            lastCheatingWarningRef.current = currentTime;
+          }
+        } else if (shoulderEarDistance >= distanceThreshold) {
+          isCheatingRef.current = false;
+        }
+      }
+
+      // Gestione warning postura angolo spalla-anca
+      if (shoulderHipAngle > 20) { // Soglia aggiornata a 20 gradi
+        showToastIfAllowed('Correggere la postura! L\'angolo tra spalla e anca deve essere minore di 30 gradi', 'warning', 2000);
+        return;
       }
 
       const newStage = determineStage(currentAngle);

@@ -12,6 +12,7 @@ export const STAGES = {
   };
   
   export const POSE_LANDMARKS = {
+    // Spalle, gomiti, polsi, anca
     LEFT_SHOULDER: 11,
     LEFT_ELBOW: 13,
     LEFT_WRIST: 15,
@@ -20,4 +21,8 @@ export const STAGES = {
     RIGHT_ELBOW: 14,
     RIGHT_WRIST: 16,
     RIGHT_HIP: 24,
+    // Orecchie
+    LEFT_EAR: 7,   // MediaPipe FaceMesh Landmark Index for Left Ear
+    RIGHT_EAR: 8,  // MediaPipe FaceMesh Landmark Index for Right Ear
   };
+  
