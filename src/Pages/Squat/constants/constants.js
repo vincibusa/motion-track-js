@@ -5,9 +5,9 @@ export const STAGES = {
 };
 
 export const STAGE_RANGES = {
-  [STAGES.STAGE1]: { min: 165, max: 180 }, // Gambe quasi dritte
-  [STAGES.STAGE2]: { min: 110, max: 165 }, // Fase di discesa
-  [STAGES.STAGE3]: { min: 70, max: 110 },  // Squat profondo
+  [STAGES.STAGE1]: { min: 145, max: 180 }, // Gambe quasi dritte
+  [STAGES.STAGE2]: { min: 120, max: 144 }, // Fase di discesa
+  [STAGES.STAGE3]: { min: 0, max: 119 },  // Squat profondo
 };
 
 export const POSE_LANDMARKS = {

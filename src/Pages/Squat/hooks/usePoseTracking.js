@@ -68,7 +68,9 @@ const usePoseTracking = ({
     const magnitude2 = Math.hypot(...hipToKnee);
     
     const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
-    return (Math.acos(cosAngle) * 180) / Math.PI;
+    const angle = (Math.acos(cosAngle) * 180) / Math.PI
+    console.log('ANGOLO TRONCO:', angle, 'gradi');
+    return angle;
   }, []);
 
   const onResults = useCallback(
