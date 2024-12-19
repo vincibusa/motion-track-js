@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
-import React, { useRef, useState, useEffect } from 'react';
+// components/Squat.jsx
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -8,7 +9,9 @@ import 'react-toastify/dist/ReactToastify.css';
 import useCameraPermission from '../../hooks/useCameraPermission';
 import usePoseTracking from './hooks/usePoseTracking';
 import useFullscreen from '../../hooks/useFullScreen';
-import useSquatValidation from './hooks/useSquatValidation';
+
+// Import Constants
+import { STAGES, STAGE_RANGES, TRUNK_ANGLE_RANGES } from './constants/constants';
 
 // Import Components
 import NavigationButton from '../../Components/NavigationButton';
@@ -21,8 +24,8 @@ import VideoCanvas from '../../Components/VideoCanvas';
 const Squat = ({ side = 'left' }) => {
   const getLandmarks = () => {
     return side === 'left'
-      ? ['LEFT_HIP', 'LEFT_KNEE', 'LEFT_ANKLE', 'LEFT_SHOULDER']
-      : ['RIGHT_HIP', 'RIGHT_KNEE', 'RIGHT_ANKLE', 'RIGHT_SHOULDER'];
+    ? ['LEFT_HIP', 'LEFT_KNEE', 'LEFT_ANKLE, LEFT_SHOULDER']
+      : ['RIGHT_HIP', 'RIGHT_KNEE', 'RIGHT_ANKLE, RIGHT_SHOULDER'];
   };
 
   const REQUIRED_LANDMARKS = getLandmarks();
@@ -33,7 +36,7 @@ const Squat = ({ side = 'left' }) => {
 
   const navigate = useNavigate();
 
-  // State declarations
+  const [angle, setAngle] = useState(0);
   const [maxFlexion, setMaxFlexion] = useState(0);
   const [isTracking, setIsTracking] = useState(false);
   const [countdown, setCountdown] = useState(5);
@@ -41,29 +44,175 @@ const Squat = ({ side = 'left' }) => {
   const [validReps, setValidReps] = useState(0);
   const [invalidReps, setInvalidReps] = useState(0);
   const [totalReps, setTotalReps] = useState(0);
+  const [stageSequence, setStageSequence] = useState([]);
+  const [currentStage, setCurrentStage] = useState(null);
   const [target, setTarget] = useState("");
   const [targetReps, setTargetReps] = useState(10);
   const [showStartButton, setShowStartButton] = useState(false);
-  const [kneeAngle, setKneeAngle] = useState(0);
-  const [trunkAngle, setTrunkAngle] = useState(0);
+  const [kneeAngle, setKneeAngle] = useState(0); // Added state for knee angle
+  const [trunkAngle, setTrunkAngle] = useState(0); // Added state for trunk angle
 
-  // Custom hooks
   const { cameraPermissionGranted, requestCameraPermission } = useCameraPermission();
   const requestFullscreen = useFullscreen();
 
-  // Rep handlers
-  const handleValidRep = () => setValidReps(prev => prev + 1);
-  const handleInvalidRep = () => setInvalidReps(prev => prev + 1);
-  const handleTotalRep = () => setTotalReps(prev => prev + 1);
 
-  // Validation hook
-  const { validateRepetition, stageSequence, currentStage } = useSquatValidation({
-    onValidRep: handleValidRep,
-    onInvalidRep: handleInvalidRep,
-    onTotalRep: handleTotalRep
-  });
+  const validateRepetition = useCallback(
+    (currentAngle, trunkAngle) => {
+      const determineStage = (kneeAngle, trunkAngle) => {
+        let stage = null;
+console.log(trunkAngle);
+        if (
+          STAGE_RANGES[STAGES.STAGE1].min <= kneeAngle &&
+          kneeAngle <= STAGE_RANGES[STAGES.STAGE1].max
+        ) {
+          stage = STAGES.STAGE1;
+          if(trunkAngle<TRUNK_ANGLE_RANGES.S1.min ){
+            toast.warning(`Sei troppo flesso, estendi la schiena`, {
+                   position: "top-center",
+                   autoClose: 1000,
+                      className : "text-2xl w-full h-auto "
+                 });
+           
+              
+             }
+        } else if (
+          STAGE_RANGES[STAGES.STAGE2].min <= kneeAngle &&
+          kneeAngle <= STAGE_RANGES[STAGES.STAGE2].max
+        ) {
+          stage = STAGES.STAGE2;
+          if(trunkAngle<TRUNK_ANGLE_RANGES.S2.min ){
+            toast.warning(`Sei troppo flesso, estendi la schiena`, {
+                   position: "top-center",
+                   autoClose: 1000,
+                      className : "text-2xl w-full h-auto "
+                 });
+           
+              
+             }
+             if(trunkAngle>TRUNK_ANGLE_RANGES.S2.max ){
+              toast.warning(`Sei troppo dritto, fletti leggermente la schiena`, {
+                     position: "top-center",
+                     autoClose: 1000,
+                        className : "text-2xl w-full h-auto "
+                   });
 
-  // Pose tracking hook
+             }
+        } else if (
+          STAGE_RANGES[STAGES.STAGE3].min <= kneeAngle &&
+          kneeAngle <= STAGE_RANGES[STAGES.STAGE3].max
+        ) {
+          stage = STAGES.STAGE3;
+          if(trunkAngle<TRUNK_ANGLE_RANGES.S3.min ){
+            toast.warning(`Sei troppo flesso, estendi la schiena`, {
+                   position: "top-center",
+                   autoClose: 1000,
+                      className : "text-2xl w-full h-auto "
+                 });
+           
+              
+             }
+             if(trunkAngle>TRUNK_ANGLE_RANGES.S3.max ){
+              toast.warning(`Sei troppo dritto, fletti leggermente la schiena`, {
+                     position: "top-center",
+                     autoClose: 1000,
+                        className : "text-2xl w-full h-auto "
+                   });
+
+             }
+        }
+  
+
+        return stage;
+      };
+
+      const validateStageSequence = (sequence) => {
+        const correctSequence = [
+          STAGES.STAGE1,  // Posizione eretta
+          STAGES.STAGE2,  // Discesa
+          STAGES.STAGE3,  // Squat profondo
+          STAGES.STAGE2,  // Risalita
+          STAGES.STAGE1   // Ritorno posizione eretta
+        ];
+  
+        if (sequence.length !== correctSequence.length) {
+    
+          return false;
+        }
+        const isValid = sequence.every((stage, index) => stage === correctSequence[index]);
+       
+        return isValid;
+      };
+
+      const newStage = determineStage(currentAngle, trunkAngle);
+      
+
+      if (!newStage) {
+
+        if (stageSequence.length > 0) {
+      
+          setStageSequence([]);
+        }
+        return;
+      }
+
+      if (newStage !== currentStage) {
+
+        setCurrentStage(newStage);
+
+        setStageSequence((prev) => {
+      
+          
+          if (prev[prev.length - 1] === newStage) {
+
+            return prev;
+          }
+
+          const newSequence = [...prev, newStage];
+   
+
+          if (validateStageSequence(newSequence)) {
+
+            setValidReps((prevReps) => prevReps + 1);
+            setTotalReps((prevTotal) => prevTotal + 1);
+            toast.success(`Squat valido!`, {
+              position: "top-center",
+              autoClose: 1000,
+                 className : "text-2xl w-full h-auto "
+            });
+            return [];
+          } else if (newSequence.length === 5) {
+
+            setInvalidReps((prevReps) => prevReps + 1);
+            setTotalReps((prevTotal) => prevTotal + 1);
+            toast.error(`Squat non valido!`, {
+              position: "top-center",
+              autoClose: 1000,
+                 className : "text-2xl w-full h-auto "
+            });
+            return [];
+          } else if (
+            newSequence.length < 5 &&
+            newStage === STAGES.STAGE1 &&
+            prev[prev.length - 1] === STAGES.STAGE2
+          ) {
+ 
+            toast.error(`Squat incompleto, scendi più in basso`, {
+              position: "top-center",
+              autoClose: 1000,
+                 className : "text-2xl w-full h-auto "
+            });
+            setInvalidReps((prevReps) => prevReps + 1);
+            setTotalReps((prevTotal) => prevTotal + 1);
+            return [];
+          }
+
+          return newSequence;
+        });
+      }
+    },
+    [currentStage, stageSequence]
+  );
+
   usePoseTracking({
     side,
     isTracking,
@@ -71,18 +220,16 @@ const Squat = ({ side = 'left' }) => {
     videoRef,
     setKneeAngle,
     setMaxFlexion,
-    validateRepetition: (kneeAngle, trunkAngle) => validateRepetition(kneeAngle, trunkAngle),
+    validateRepetition,
     setTrunkAngle,
   });
 
-  // Effect for handling exercise completion
   useEffect(() => {
     if (totalReps >= targetReps) {
       setIsTracking(false);
       toast.info(`Hai completato ${targetReps} ripetizioni!`, {
         position: "top-center",
         autoClose: 2000,
-        className: "text-2xl w-full h-auto"
       });
       localStorage.setItem('totalReps', totalReps.toString());
       localStorage.setItem('validReps', validReps.toString());
@@ -94,7 +241,6 @@ const Squat = ({ side = 'left' }) => {
     }
   }, [totalReps, targetReps, validReps, invalidReps, navigate]);
 
-  // Handle start button click
   const handleStart = async () => {
     if (!cameraPermissionGranted) {
       await requestCameraPermission();
@@ -122,7 +268,6 @@ const Squat = ({ side = 'left' }) => {
     }, 1000);
   };
 
-  // Handle rep input confirmation
   const handleConfirmReps = () => {
     const reps = Number(target);
     if (reps >= 1 && reps <= 50) {
@@ -132,7 +277,7 @@ const Squat = ({ side = 'left' }) => {
       toast.error('Inserisci un numero di ripetizioni valido (1-50).', {
         position: "top-center",
         autoClose: 2000,
-        className: "text-2xl w-full h-auto"
+           className : "text-2xl w-full h-auto "
       });
     }
   };
@@ -161,6 +306,6 @@ const Squat = ({ side = 'left' }) => {
       </div>
     </div>
   );
-};
+}
 
 export default Squat;
