@@ -16,7 +16,7 @@ const useSquatValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
     const currentTime = Date.now();
     if (currentTime - lastToastTimeRef.current >= autoClose) {
       toast[type](message, {
-        position: "top-center",
+        position: "center-left",
         autoClose,
         className: "text-2xl w-full h-auto"
       });
