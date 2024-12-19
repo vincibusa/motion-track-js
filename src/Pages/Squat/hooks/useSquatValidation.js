@@ -98,20 +98,21 @@ const useSquatValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
           if (newSequence.length === 5) {
             onTotalRep();
             
+            // Check if sequence is valid
             const isSequenceValid = validateStageSequence(newSequence);
-            const hasFormFaults = formFaultsRef.current.length > 0;
             
-            if (isSequenceValid && !hasFormFaults) {
+            // Even if sequence is valid, rep is invalid if there are form faults
+            if (isSequenceValid && formFaultsRef.current.length === 0) {
               onValidRep();
               showToastIfAllowed('Squat valido!', 'success');
             } else {
-              onInvalidRep();
-              const message = hasFormFaults
+            
+              const message = formFaultsRef.current.length > 0
                 ? `Squat non valido!\nMotivo:\n${formFaultsRef.current.join('\n')}`
                 : 'Squat non valido!';
+                onInvalidRep();
               showToastIfAllowed(message, 'error');
             }
-            
             formFaultsRef.current = [];
             return [];
           }
