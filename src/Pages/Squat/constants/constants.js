@@ -21,6 +21,8 @@ export const POSE_LANDMARKS = {
   RIGHT_SHOULDER: 12,
 };
 
+
+
 export const TRUNK_ANGLE_RANGES = {
  S1: { min: 140, max: 180 }, // Good trunk angle during squat
   S2: { min: 120, max: 154 }, // Warning zone
