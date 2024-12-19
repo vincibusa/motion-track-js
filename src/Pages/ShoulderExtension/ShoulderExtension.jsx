@@ -79,10 +79,10 @@ const ShoulderFlexion = ({ side = 'left' }) => {
 
   // Classify Flexion
   const classifyFlexion = angle => {
-    if (angle <= 100) return "Poor mobility";
-    if (angle <= 130) return "Fair";
-    if (angle <= 170) return "Good";
-    if (angle <= 180) return "Excellent";
+    if (angle <= 20) return "Poor mobility";
+    if (angle <= 30) return "Fair";
+    if (angle <= 40) return "Good";
+    if (angle <= 140) return "Excellent";
     return "Invalid";
   };
 
