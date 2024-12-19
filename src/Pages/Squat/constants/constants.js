@@ -22,7 +22,7 @@ export const POSE_LANDMARKS = {
 };
 
 export const TRUNK_ANGLE_RANGES = {
-  GOOD: { min: 45, max: 90 }, // Good trunk angle during squat
-  WARNING: { min: 30, max: 45 }, // Warning zone
-  BAD: { min: 0, max: 30 } // Poor form, too much forward lean
+  GOOD: { min: 145, max: 180 }, // Good trunk angle during squat
+  WARNING: { min: 120, max: 144 }, // Warning zone
+  BAD: { min: 0, max: 119 }, // Poor form, too much forward lean
 };

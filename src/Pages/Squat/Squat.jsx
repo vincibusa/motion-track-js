@@ -50,16 +50,17 @@ const Squat = ({ side = 'left' }) => {
   const [targetReps, setTargetReps] = useState(10);
   const [showStartButton, setShowStartButton] = useState(false);
   const [kneeAngle, setKneeAngle] = useState(0); // Added state for knee angle
+  const [trunkAngle, setTrunkAngle] = useState(0); // Added state for trunk angle
 
   const { cameraPermissionGranted, requestCameraPermission } = useCameraPermission();
   const requestFullscreen = useFullscreen();
 
 
   const validateRepetition = useCallback(
-    (currentAngle) => {
+    (currentAngle, trunkAngle) => {
       const determineStage = (kneeAngle) => {
         let stage = null;
-  
+
         if (
           STAGE_RANGES[STAGES.STAGE1].min <= kneeAngle &&
           kneeAngle <= STAGE_RANGES[STAGES.STAGE1].max
@@ -77,7 +78,7 @@ const Squat = ({ side = 'left' }) => {
           stage = STAGES.STAGE3;
         }
   
-        console.log('🎯 Determined Stage:', stage);
+
         return stage;
       };
 
@@ -89,45 +90,98 @@ const Squat = ({ side = 'left' }) => {
           STAGES.STAGE2,  // Risalita
           STAGES.STAGE1   // Ritorno posizione eretta
         ];
-        console.log('🔍 Validating Sequence:', sequence);
-        console.log('✅ Correct Sequence:', correctSequence);
+  
         if (sequence.length !== correctSequence.length) {
-          console.log('❌ Sequence length mismatch');
+    
           return false;
         }
         const isValid = sequence.every((stage, index) => stage === correctSequence[index]);
-        console.log('🎯 Sequence Valid:', isValid);
+       
         return isValid;
       };
 
-      const newStage = determineStage(currentAngle);
+      const newStage = determineStage(currentAngle, trunkAngle);
+      if (newStage===STAGES.STAGE1 ) {
+        if(trunkAngle<STAGES.STAGE1.min ){
+       toast.warning(`Sei troppo flesso, estendi la schiena`, {
+              position: "top-center",
+              autoClose: 1000,
+                 className : "text-2xl w-full h-auto "
+            });
+      
+            return;
+        }
+
+      }
+      if (newStage===STAGES.STAGE2 ) {
+        if(trunkAngle<STAGES.STAGE2.min ){
+       toast.warning(`Sei troppo flesso, estendi la schiena`, {
+              position: "top-center",
+              autoClose: 1000,
+                 className : "text-2xl w-full h-auto "
+            });
+     
+            return;
+        }
+        if(trunkAngle>STAGES.STAGE2.max ){
+        toast.warning(`Sei troppo dritto, fletti leggermente la schiena`, {
+                position: "top-center",
+                autoClose: 1000,
+                  className : "text-2xl w-full h-auto "
+              });
+        
+              return;
+          }
+
+      }
+      if (newStage===STAGES.STAGE3 ) {
+        if(trunkAngle<STAGES.STAGE3.min ){
+       toast.warning(`Sei troppo flesso, estendi la schiena`, {
+              position: "top-center",
+              autoClose: 1000,
+                 className : "text-2xl w-full h-auto "
+            });
+      
+            return;
+        }
+        if(trunkAngle>STAGES.STAGE2.max ){
+          toast.warning(`Sei troppo dritto, fletti leggermente la schiena`, {
+                  position: "top-center",
+                  autoClose: 1000,
+                    className : "text-2xl w-full h-auto "
+                });
+          
+                return;
+            }
+
+      }
 
       if (!newStage) {
-        console.log('⚠️ No valid stage detected, current sequence:', stageSequence);
+
         if (stageSequence.length > 0) {
-          console.log('🔄 Resetting stage sequence');
+      
           setStageSequence([]);
         }
         return;
       }
 
       if (newStage !== currentStage) {
-        console.log('🔄 Stage changed from', currentStage, 'to', newStage);
+
         setCurrentStage(newStage);
 
         setStageSequence((prev) => {
-          console.log('📊 Previous sequence:', prev);
+      
           
           if (prev[prev.length - 1] === newStage) {
-            console.log('🔄 Duplicate stage detected, keeping previous sequence');
+
             return prev;
           }
 
           const newSequence = [...prev, newStage];
-          console.log('📊 New sequence:', newSequence);
+   
 
           if (validateStageSequence(newSequence)) {
-            console.log('✅ Valid squat repetition detected!');
+
             setValidReps((prevReps) => prevReps + 1);
             setTotalReps((prevTotal) => prevTotal + 1);
             toast.success(`Squat valido!`, {
@@ -137,7 +191,7 @@ const Squat = ({ side = 'left' }) => {
             });
             return [];
           } else if (newSequence.length === 5) {
-            console.log('❌ Invalid squat sequence detected');
+
             setInvalidReps((prevReps) => prevReps + 1);
             setTotalReps((prevTotal) => prevTotal + 1);
             toast.error(`Squat non valido!`, {
@@ -151,7 +205,7 @@ const Squat = ({ side = 'left' }) => {
             newStage === STAGES.STAGE1 &&
             prev[prev.length - 1] === STAGES.STAGE2
           ) {
-            console.log('⚠️ Incomplete squat detected - not deep enough');
+ 
             toast.error(`Squat incompleto, scendi più in basso`, {
               position: "top-center",
               autoClose: 1000,
@@ -177,6 +231,7 @@ const Squat = ({ side = 'left' }) => {
     setKneeAngle,
     setMaxFlexion,
     validateRepetition,
+    setTrunkAngle,
   });
 
   useEffect(() => {

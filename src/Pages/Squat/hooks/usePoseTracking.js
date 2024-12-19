@@ -11,6 +11,7 @@ const usePoseTracking = ({
   canvasRef,
   videoRef,
   setKneeAngle,
+  setTrunkAngle,
   setMaxFlexion,
   validateRepetition,
 }) => {
@@ -55,21 +56,30 @@ const usePoseTracking = ({
     const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
     let angleDegrees = (Math.acos(cosAngle) * 180) / Math.PI;
     angleDegrees = 180 - angleDegrees;
-    console.log('ANGOLO GINOCCHIO:', angleDegrees, 'gradi');
+
     return angleDegrees;
   }, []);
 
   const calculateTrunkAngle = useCallback((shoulder, hip, knee) => {
-    const shoulderToHip = [hip[0] - shoulder[0], hip[1] - shoulder[1]];
-    const hipToKnee = [knee[0] - hip[0], knee[1] - hip[1]];
-    
-    const dotProduct = shoulderToHip[0] * hipToKnee[0] + shoulderToHip[1] * hipToKnee[1];
-    const magnitude1 = Math.hypot(...shoulderToHip);
+    // Calcolo dei vettori
+    const hipToShoulder = [shoulder[0] - hip[0], shoulder[1] - hip[1]]; // Vettore da anca a spalla
+    const hipToKnee = [knee[0] - hip[0], knee[1] - hip[1]];             // Vettore da anca a ginocchio
+  
+    // Prodotto scalare dei vettori
+    const dotProduct = hipToShoulder[0] * hipToKnee[0] + hipToShoulder[1] * hipToKnee[1];
+  
+    // Calcolo delle magnitudini
+    const magnitude1 = Math.hypot(...hipToShoulder);
     const magnitude2 = Math.hypot(...hipToKnee);
-    
+  
+    // Calcolo del coseno dell'angolo
     const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
-    const angle = (Math.acos(cosAngle) * 180) / Math.PI
-    console.log('ANGOLO TRONCO:', angle, 'gradi');
+  
+    // Angolo in gradi
+    const angle = (Math.acos(cosAngle) * 180) / Math.PI;
+  
+
+  
     return angle;
   }, []);
 
@@ -108,6 +118,7 @@ const usePoseTracking = ({
       const trunkAngle = calculateTrunkAngle(shoulder, hip, knee);
       
       setKneeAngle(kneeAngle);
+      setTrunkAngle(trunkAngle);
       validateRepetition(kneeAngle, trunkAngle);
 
       setMaxFlexion((prevMax) => {
