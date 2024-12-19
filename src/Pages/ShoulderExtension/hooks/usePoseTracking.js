@@ -12,7 +12,7 @@ const usePoseTracking = ({
   canvasRef,
   videoRef,
   setAngle,
-  setMaxExtension,
+  setMaxFlexion,
 }) => {
 
   const landmarkConnections = useMemo(() => ({
@@ -88,7 +88,7 @@ const usePoseTracking = ({
 
       const newAngle = calculateShoulderExtension(hip, shoulder, elbow);
       setAngle(newAngle);
-      setMaxExtension((prevMax) => {
+      setMaxFlexion((prevMax) => {
         if (newAngle > 0){
           const updatedMax = Math.max(prevMax, Math.abs(newAngle));
           localStorage.setItem('maxFlexion', updatedMax.toString());

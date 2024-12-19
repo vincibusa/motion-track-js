@@ -92,14 +92,14 @@ const useRepValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
         }
         // Iniziare una nuova ripetizione
         setStageSequence([newStage]);
-        console.log('🔄 Stage Sequence (Nuova Ripetizione):', [newStage]); // Aggiunto
+
         return;
       }
 
       if (!newStage) {
         if (stageSequence.length > 0) {
           setStageSequence([]);
-          console.log('🔄 Stage Sequence resettata:', []); // Aggiunto
+
         }
         return;
       }
@@ -146,7 +146,7 @@ const useRepValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
         }
 
         const newSequence = [...prev, newStage];
-        console.log('🔄 Stage Sequence aggiornata:', newSequence); // Aggiunto
+      
         const isValidSequence = validateStageSequence(newSequence);
 
         // Se la sequenza è completa
@@ -164,7 +164,7 @@ const useRepValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
           }
           // Reset della sequenza e dei motivi per la prossima rep
           repFaultReasonsRef.current = [];
-          console.log('🔄 Stage Sequence completata e resettata:', []); // Aggiunto
+
           return [];
         }
 
@@ -178,7 +178,7 @@ const useRepValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
           showToastIfAllowed(reasons, 'error', 1000, lastToastTimeRef);
           // Reset della sequenza e dei motivi per la prossima rep
           repFaultReasonsRef.current = [];
-          console.log('🔄 Stage Sequence superata senza completare la sequenza:', []); // Aggiunto
+
           return [];
         }
 
@@ -196,7 +196,7 @@ const useRepValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
           showToastIfAllowed(reasons, 'error', 1000, lastToastTimeRef);
           // Reset della sequenza e dei motivi per la prossima rep
           repFaultReasonsRef.current = [];
-          console.log('🔄 Stage Sequence interrotta troppo presto:', []); // Aggiunto
+   
           return [];
         }
 

@@ -113,7 +113,7 @@ const ShoulderFlexion = ({ side = 'left' }) => {
 
       <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center space-x-4 z-50">
         {isTracking && (
-          <Summary maxFlexion={maxFlexion} classifyFlexion={classifyFlexion} />
+          <Summary name={"Massima Estensione"} maxFlexion={maxFlexion} classifyFlexion={classifyFlexion} />
         )}
       </div>
     </div>
