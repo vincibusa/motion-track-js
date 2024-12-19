@@ -56,15 +56,15 @@ const Squat = ({ side = 'left' }) => {
 
   const validateRepetition = useCallback(
     (currentAngle) => {
-      console.log('📐 Current Angle:', currentAngle);
+      console.log('📐 Current KNEE Angle:', currentAngle);
 
-      const determineStage = (angle) => {
+      const determineStage = (kneeAngle) => {
         let stage = null;
-        if (angle >= STAGE_RANGES.STAGE1.min && angle <= STAGE_RANGES.STAGE1.max) {
+        if (STAGE_RANGES.STAGE1.min <= kneeAngle <= STAGE_RANGES.STAGE1.max) {
           stage = STAGES.STAGE1;
-        } else if (angle >= STAGE_RANGES.STAGE2.min && angle < STAGE_RANGES.STAGE2.max) {
+        } else if (STAGE_RANGES.STAGE2.min <= kneeAngle <= STAGE_RANGES.STAGE2.max) {
           stage = STAGES.STAGE2;
-        } else if (angle >= STAGE_RANGES.STAGE3.min && angle < STAGE_RANGES.STAGE3.max) {
+        } else if (STAGE_RANGES.STAGE3.min <= kneeAngle <= STAGE_RANGES.STAGE3.max) {
           stage = STAGES.STAGE3;
         }
         console.log('🎯 Determined Stage:', stage);

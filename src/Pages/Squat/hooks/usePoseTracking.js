@@ -10,7 +10,7 @@ const usePoseTracking = ({
   isTracking,
   canvasRef,
   videoRef,
-  setAngle,
+  setKneeAngle,
   setMaxFlexion,
   validateRepetition,
 }) => {
@@ -55,7 +55,7 @@ const usePoseTracking = ({
     const cosAngle = Math.min(Math.max(dotProduct / (magnitude1 * magnitude2), -1), 1);
     let angleDegrees = (Math.acos(cosAngle) * 180) / Math.PI;
     angleDegrees = 180 - angleDegrees;
-    console.log('ANGOLO FINALE:', angleDegrees, 'gradi');
+    console.log('ANGOLO GINOCCHIO:', angleDegrees, 'gradi');
     return angleDegrees;
   }, []);
 
@@ -102,14 +102,14 @@ const usePoseTracking = ({
         landmarks[ankleIndex].y * height,
       ];
 
-      const squatAngle = calculateSquatAngle(hip, knee, ankle);
+      const kneeAngle = calculateSquatAngle(hip, knee, ankle);
       const trunkAngle = calculateTrunkAngle(shoulder, hip, knee);
       
-      setAngle(squatAngle);
-      validateRepetition(squatAngle, trunkAngle);
+      setKneeAngle(kneeAngle);
+      validateRepetition(kneeAngle, trunkAngle);
 
       setMaxFlexion((prevMax) => {
-        const updatedMax = Math.min(prevMax, squatAngle);
+        const updatedMax = Math.min(prevMax, kneeAngle);
         localStorage.setItem('maxFlexion', updatedMax.toString());
         return updatedMax;
       });
