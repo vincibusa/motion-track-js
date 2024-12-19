@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import useCameraPermission from '../../hooks/useCameraPermission';
 import usePoseTracking from './hooks/usePoseTracking';
 import useFullscreen from '../../hooks/useFullScreen';
+import useSquatValidation from './hooks/useSquatValidation';
 
 // Import Constants
 import { STAGES, STAGE_RANGES, TRUNK_ANGLE_RANGES } from './constants/constants';
@@ -44,174 +45,24 @@ const Squat = ({ side = 'left' }) => {
   const [validReps, setValidReps] = useState(0);
   const [invalidReps, setInvalidReps] = useState(0);
   const [totalReps, setTotalReps] = useState(0);
-  const [stageSequence, setStageSequence] = useState([]);
-  const [currentStage, setCurrentStage] = useState(null);
+
   const [target, setTarget] = useState("");
   const [targetReps, setTargetReps] = useState(10);
   const [showStartButton, setShowStartButton] = useState(false);
   const [kneeAngle, setKneeAngle] = useState(0); // Added state for knee angle
   const [trunkAngle, setTrunkAngle] = useState(0); // Added state for trunk angle
+  const handleValidRep = () => setValidReps(prev => prev + 1);
+  const handleInvalidRep = () => setInvalidReps(prev => prev + 1);
+  const handleTotalRep = () => setTotalReps(prev => prev + 1);
 
   const { cameraPermissionGranted, requestCameraPermission } = useCameraPermission();
   const requestFullscreen = useFullscreen();
 
-
-  const validateRepetition = useCallback(
-    (currentAngle, trunkAngle) => {
-      const determineStage = (kneeAngle, trunkAngle) => {
-        let stage = null;
-console.log(trunkAngle);
-        if (
-          STAGE_RANGES[STAGES.STAGE1].min <= kneeAngle &&
-          kneeAngle <= STAGE_RANGES[STAGES.STAGE1].max
-        ) {
-          stage = STAGES.STAGE1;
-          if(trunkAngle<TRUNK_ANGLE_RANGES.S1.min ){
-            toast.warning(`Sei troppo flesso, estendi la schiena`, {
-                   position: "top-center",
-                   autoClose: 1000,
-                      className : "text-2xl w-full h-auto "
-                 });
-           
-              
-             }
-        } else if (
-          STAGE_RANGES[STAGES.STAGE2].min <= kneeAngle &&
-          kneeAngle <= STAGE_RANGES[STAGES.STAGE2].max
-        ) {
-          stage = STAGES.STAGE2;
-          if(trunkAngle<TRUNK_ANGLE_RANGES.S2.min ){
-            toast.warning(`Sei troppo flesso, estendi la schiena`, {
-                   position: "top-center",
-                   autoClose: 1000,
-                      className : "text-2xl w-full h-auto "
-                 });
-           
-              
-             }
-             if(trunkAngle>TRUNK_ANGLE_RANGES.S2.max ){
-              toast.warning(`Sei troppo dritto, fletti leggermente la schiena`, {
-                     position: "top-center",
-                     autoClose: 1000,
-                        className : "text-2xl w-full h-auto "
-                   });
-
-             }
-        } else if (
-          STAGE_RANGES[STAGES.STAGE3].min <= kneeAngle &&
-          kneeAngle <= STAGE_RANGES[STAGES.STAGE3].max
-        ) {
-          stage = STAGES.STAGE3;
-          if(trunkAngle<TRUNK_ANGLE_RANGES.S3.min ){
-            toast.warning(`Sei troppo flesso, estendi la schiena`, {
-                   position: "top-center",
-                   autoClose: 1000,
-                      className : "text-2xl w-full h-auto "
-                 });
-           
-              
-             }
-             if(trunkAngle>TRUNK_ANGLE_RANGES.S3.max ){
-              toast.warning(`Sei troppo dritto, fletti leggermente la schiena`, {
-                     position: "top-center",
-                     autoClose: 1000,
-                        className : "text-2xl w-full h-auto "
-                   });
-
-             }
-        }
-  
-
-        return stage;
-      };
-
-      const validateStageSequence = (sequence) => {
-        const correctSequence = [
-          STAGES.STAGE1,  // Posizione eretta
-          STAGES.STAGE2,  // Discesa
-          STAGES.STAGE3,  // Squat profondo
-          STAGES.STAGE2,  // Risalita
-          STAGES.STAGE1   // Ritorno posizione eretta
-        ];
-  
-        if (sequence.length !== correctSequence.length) {
-    
-          return false;
-        }
-        const isValid = sequence.every((stage, index) => stage === correctSequence[index]);
-       
-        return isValid;
-      };
-
-      const newStage = determineStage(currentAngle, trunkAngle);
-      
-
-      if (!newStage) {
-
-        if (stageSequence.length > 0) {
-      
-          setStageSequence([]);
-        }
-        return;
-      }
-
-      if (newStage !== currentStage) {
-
-        setCurrentStage(newStage);
-
-        setStageSequence((prev) => {
-      
-          
-          if (prev[prev.length - 1] === newStage) {
-
-            return prev;
-          }
-
-          const newSequence = [...prev, newStage];
-   
-
-          if (validateStageSequence(newSequence)) {
-
-            setValidReps((prevReps) => prevReps + 1);
-            setTotalReps((prevTotal) => prevTotal + 1);
-            toast.success(`Squat valido!`, {
-              position: "top-center",
-              autoClose: 1000,
-                 className : "text-2xl w-full h-auto "
-            });
-            return [];
-          } else if (newSequence.length === 5) {
-
-            setInvalidReps((prevReps) => prevReps + 1);
-            setTotalReps((prevTotal) => prevTotal + 1);
-            toast.error(`Squat non valido!`, {
-              position: "top-center",
-              autoClose: 1000,
-                 className : "text-2xl w-full h-auto "
-            });
-            return [];
-          } else if (
-            newSequence.length < 5 &&
-            newStage === STAGES.STAGE1 &&
-            prev[prev.length - 1] === STAGES.STAGE2
-          ) {
- 
-            toast.error(`Squat incompleto, scendi più in basso`, {
-              position: "top-center",
-              autoClose: 1000,
-                 className : "text-2xl w-full h-auto "
-            });
-            setInvalidReps((prevReps) => prevReps + 1);
-            setTotalReps((prevTotal) => prevTotal + 1);
-            return [];
-          }
-
-          return newSequence;
-        });
-      }
-    },
-    [currentStage, stageSequence]
-  );
+  const { validateRepetition, stageSequence, currentStage } = useSquatValidation({
+    onValidRep: handleValidRep,
+    onInvalidRep: handleInvalidRep,
+    onTotalRep: handleTotalRep
+  });
 
   usePoseTracking({
     side,
@@ -220,7 +71,7 @@ console.log(trunkAngle);
     videoRef,
     setKneeAngle,
     setMaxFlexion,
-    validateRepetition,
+    validateRepetition: (kneeAngle, trunkAngle) => validateRepetition(kneeAngle, trunkAngle),
     setTrunkAngle,
   });
 
