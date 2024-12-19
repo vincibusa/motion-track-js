@@ -57,8 +57,16 @@ const usePoseTracking = ({
     const cosTheta = Math.min(Math.max(dotProduct / (magnitudeShoulderToHip * magnitudeShoulderToElbow), -1), 1);
   
     let angleRadians = Math.acos(cosTheta);
-  
-    const crossProduct = shoulderToHip[1] * shoulderToElbow[0] - shoulderToHip[0] * shoulderToElbow[1];
+    
+    let crossProduct;
+
+    if (side=='left'){
+      crossProduct = shoulderToHip[1] * shoulderToElbow[0] - shoulderToHip[0] * shoulderToElbow[1];
+    }
+    else if (side=='right'){
+      crossProduct = shoulderToHip[0] * shoulderToElbow[1] - shoulderToHip[1] * shoulderToElbow[0]  ;
+    }
+
     const sign = crossProduct > 0 ? 1 : -1; 
   
     const angleDegrees = (angleRadians * 180) / Math.PI * sign;
