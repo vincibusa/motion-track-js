@@ -25,14 +25,14 @@ const ExerciseTest = () => {
       title: "Esercizi di Riabilitazione Squat Sinistro",
       image: "https://i.ibb.co/LQ9x8xM/DALL-E-2024-12-08-21-41-07-A-cartoon-style-illustration-of-a-patient-at-home-performing-a-squat-exer.webp",
       description: "Esercizi di riabilitazione per il ginocchio destro, focalizzati su forza e recupero della mobilità.",
-      route: "/squat",
+      route: "/squat-left",
     },
     {
       id: 4,
       title: "Esercizi di Riabilitazione Squat Destro",
       image: "https://i.ibb.co/LQ9x8xM/DALL-E-2024-12-08-21-41-07-A-cartoon-style-illustration-of-a-patient-at-home-performing-a-squat-exer.webp",
       description: "Esercizi di riabilitazione per il ginocchio destro, focalizzati su forza e recupero della mobilità.",
-      route: "/squat",
+      route: "/squat-right",
     },
     {
       id: 5,

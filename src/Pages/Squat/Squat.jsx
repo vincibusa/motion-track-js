@@ -1,6 +1,5 @@
 /* eslint-disable no-unused-vars */
-// components/Squat.jsx
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -10,9 +9,6 @@ import useCameraPermission from '../../hooks/useCameraPermission';
 import usePoseTracking from './hooks/usePoseTracking';
 import useFullscreen from '../../hooks/useFullScreen';
 import useSquatValidation from './hooks/useSquatValidation';
-
-// Import Constants
-import { STAGES, STAGE_RANGES, TRUNK_ANGLE_RANGES } from './constants/constants';
 
 // Import Components
 import NavigationButton from '../../Components/NavigationButton';
@@ -25,8 +21,8 @@ import VideoCanvas from '../../Components/VideoCanvas';
 const Squat = ({ side = 'left' }) => {
   const getLandmarks = () => {
     return side === 'left'
-    ? ['LEFT_HIP', 'LEFT_KNEE', 'LEFT_ANKLE, LEFT_SHOULDER']
-      : ['RIGHT_HIP', 'RIGHT_KNEE', 'RIGHT_ANKLE, RIGHT_SHOULDER'];
+      ? ['LEFT_HIP', 'LEFT_KNEE', 'LEFT_ANKLE', 'LEFT_SHOULDER']
+      : ['RIGHT_HIP', 'RIGHT_KNEE', 'RIGHT_ANKLE', 'RIGHT_SHOULDER'];
   };
 
   const REQUIRED_LANDMARKS = getLandmarks();
@@ -37,7 +33,7 @@ const Squat = ({ side = 'left' }) => {
 
   const navigate = useNavigate();
 
-  const [angle, setAngle] = useState(0);
+  // State declarations
   const [maxFlexion, setMaxFlexion] = useState(0);
   const [isTracking, setIsTracking] = useState(false);
   const [countdown, setCountdown] = useState(5);
@@ -45,25 +41,29 @@ const Squat = ({ side = 'left' }) => {
   const [validReps, setValidReps] = useState(0);
   const [invalidReps, setInvalidReps] = useState(0);
   const [totalReps, setTotalReps] = useState(0);
-
   const [target, setTarget] = useState("");
   const [targetReps, setTargetReps] = useState(10);
   const [showStartButton, setShowStartButton] = useState(false);
-  const [kneeAngle, setKneeAngle] = useState(0); // Added state for knee angle
-  const [trunkAngle, setTrunkAngle] = useState(0); // Added state for trunk angle
+  const [kneeAngle, setKneeAngle] = useState(0);
+  const [trunkAngle, setTrunkAngle] = useState(0);
+
+  // Custom hooks
+  const { cameraPermissionGranted, requestCameraPermission } = useCameraPermission();
+  const requestFullscreen = useFullscreen();
+
+  // Rep handlers
   const handleValidRep = () => setValidReps(prev => prev + 1);
   const handleInvalidRep = () => setInvalidReps(prev => prev + 1);
   const handleTotalRep = () => setTotalReps(prev => prev + 1);
 
-  const { cameraPermissionGranted, requestCameraPermission } = useCameraPermission();
-  const requestFullscreen = useFullscreen();
-
+  // Validation hook
   const { validateRepetition, stageSequence, currentStage } = useSquatValidation({
     onValidRep: handleValidRep,
     onInvalidRep: handleInvalidRep,
     onTotalRep: handleTotalRep
   });
 
+  // Pose tracking hook
   usePoseTracking({
     side,
     isTracking,
@@ -75,12 +75,14 @@ const Squat = ({ side = 'left' }) => {
     setTrunkAngle,
   });
 
+  // Effect for handling exercise completion
   useEffect(() => {
     if (totalReps >= targetReps) {
       setIsTracking(false);
       toast.info(`Hai completato ${targetReps} ripetizioni!`, {
         position: "top-center",
         autoClose: 2000,
+        className: "text-2xl w-full h-auto"
       });
       localStorage.setItem('totalReps', totalReps.toString());
       localStorage.setItem('validReps', validReps.toString());
@@ -92,6 +94,7 @@ const Squat = ({ side = 'left' }) => {
     }
   }, [totalReps, targetReps, validReps, invalidReps, navigate]);
 
+  // Handle start button click
   const handleStart = async () => {
     if (!cameraPermissionGranted) {
       await requestCameraPermission();
@@ -119,6 +122,7 @@ const Squat = ({ side = 'left' }) => {
     }, 1000);
   };
 
+  // Handle rep input confirmation
   const handleConfirmReps = () => {
     const reps = Number(target);
     if (reps >= 1 && reps <= 50) {
@@ -128,7 +132,7 @@ const Squat = ({ side = 'left' }) => {
       toast.error('Inserisci un numero di ripetizioni valido (1-50).', {
         position: "top-center",
         autoClose: 2000,
-           className : "text-2xl w-full h-auto "
+        className: "text-2xl w-full h-auto"
       });
     }
   };
@@ -157,6 +161,6 @@ const Squat = ({ side = 'left' }) => {
       </div>
     </div>
   );
-}
+};
 
 export default Squat;
