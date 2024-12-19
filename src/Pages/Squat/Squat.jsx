@@ -11,7 +11,7 @@ import usePoseTracking from './hooks/usePoseTracking';
 import useFullscreen from '../../hooks/useFullScreen';
 
 // Import Constants
-import { STAGES, STAGE_RANGES } from './constants/constants';
+import { STAGES, STAGE_RANGES, TRUNK_ANGLE_RANGES } from './constants/constants';
 
 // Import Components
 import NavigationButton from '../../Components/NavigationButton';
@@ -58,24 +58,67 @@ const Squat = ({ side = 'left' }) => {
 
   const validateRepetition = useCallback(
     (currentAngle, trunkAngle) => {
-      const determineStage = (kneeAngle) => {
+      const determineStage = (kneeAngle, trunkAngle) => {
         let stage = null;
-
+console.log(trunkAngle);
         if (
           STAGE_RANGES[STAGES.STAGE1].min <= kneeAngle &&
           kneeAngle <= STAGE_RANGES[STAGES.STAGE1].max
         ) {
           stage = STAGES.STAGE1;
+          if(trunkAngle<TRUNK_ANGLE_RANGES.S1.min ){
+            toast.warning(`Sei troppo flesso, estendi la schiena`, {
+                   position: "top-center",
+                   autoClose: 1000,
+                      className : "text-2xl w-full h-auto "
+                 });
+           
+              
+             }
         } else if (
           STAGE_RANGES[STAGES.STAGE2].min <= kneeAngle &&
           kneeAngle <= STAGE_RANGES[STAGES.STAGE2].max
         ) {
           stage = STAGES.STAGE2;
+          if(trunkAngle<TRUNK_ANGLE_RANGES.S2.min ){
+            toast.warning(`Sei troppo flesso, estendi la schiena`, {
+                   position: "top-center",
+                   autoClose: 1000,
+                      className : "text-2xl w-full h-auto "
+                 });
+           
+              
+             }
+             if(trunkAngle>TRUNK_ANGLE_RANGES.S2.max ){
+              toast.warning(`Sei troppo dritto, fletti leggermente la schiena`, {
+                     position: "top-center",
+                     autoClose: 1000,
+                        className : "text-2xl w-full h-auto "
+                   });
+
+             }
         } else if (
           STAGE_RANGES[STAGES.STAGE3].min <= kneeAngle &&
           kneeAngle <= STAGE_RANGES[STAGES.STAGE3].max
         ) {
           stage = STAGES.STAGE3;
+          if(trunkAngle<TRUNK_ANGLE_RANGES.S3.min ){
+            toast.warning(`Sei troppo flesso, estendi la schiena`, {
+                   position: "top-center",
+                   autoClose: 1000,
+                      className : "text-2xl w-full h-auto "
+                 });
+           
+              
+             }
+             if(trunkAngle>TRUNK_ANGLE_RANGES.S3.max ){
+              toast.warning(`Sei troppo dritto, fletti leggermente la schiena`, {
+                     position: "top-center",
+                     autoClose: 1000,
+                        className : "text-2xl w-full h-auto "
+                   });
+
+             }
         }
   
 
@@ -101,60 +144,7 @@ const Squat = ({ side = 'left' }) => {
       };
 
       const newStage = determineStage(currentAngle, trunkAngle);
-      if (newStage===STAGES.STAGE1 ) {
-        if(trunkAngle<STAGES.STAGE1.min ){
-       toast.warning(`Sei troppo flesso, estendi la schiena`, {
-              position: "top-center",
-              autoClose: 1000,
-                 className : "text-2xl w-full h-auto "
-            });
       
-            return;
-        }
-
-      }
-      if (newStage===STAGES.STAGE2 ) {
-        if(trunkAngle<STAGES.STAGE2.min ){
-       toast.warning(`Sei troppo flesso, estendi la schiena`, {
-              position: "top-center",
-              autoClose: 1000,
-                 className : "text-2xl w-full h-auto "
-            });
-     
-            return;
-        }
-        if(trunkAngle>STAGES.STAGE2.max ){
-        toast.warning(`Sei troppo dritto, fletti leggermente la schiena`, {
-                position: "top-center",
-                autoClose: 1000,
-                  className : "text-2xl w-full h-auto "
-              });
-        
-              return;
-          }
-
-      }
-      if (newStage===STAGES.STAGE3 ) {
-        if(trunkAngle<STAGES.STAGE3.min ){
-       toast.warning(`Sei troppo flesso, estendi la schiena`, {
-              position: "top-center",
-              autoClose: 1000,
-                 className : "text-2xl w-full h-auto "
-            });
-      
-            return;
-        }
-        if(trunkAngle>STAGES.STAGE2.max ){
-          toast.warning(`Sei troppo dritto, fletti leggermente la schiena`, {
-                  position: "top-center",
-                  autoClose: 1000,
-                    className : "text-2xl w-full h-auto "
-                });
-          
-                return;
-            }
-
-      }
 
       if (!newStage) {
 
