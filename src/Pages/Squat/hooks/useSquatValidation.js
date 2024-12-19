@@ -48,9 +48,9 @@ const useSquatValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
       if (trunkAngle < TRUNK_ANGLE_RANGES.S2.min) {
         addFormFault('Sei troppo flesso, estendi la schiena');
       }
-      if (trunkAngle > TRUNK_ANGLE_RANGES.S2.max) {
-        addFormFault('Sei troppo dritto, fletti leggermente la schiena');
-      }
+    //   if (trunkAngle > TRUNK_ANGLE_RANGES.S2.max) {
+    //     addFormFault('Sei troppo dritto, fletti leggermente la schiena');
+    //   }
     } 
     // Check Stage 3 (Bottom position)
     else if (kneeAngle >= STAGE_RANGES[STAGES.STAGE3].min && 
@@ -59,9 +59,9 @@ const useSquatValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
       if (trunkAngle < TRUNK_ANGLE_RANGES.S3.min) {
         addFormFault('Sei troppo flesso, estendi la schiena');
       }
-      if (trunkAngle > TRUNK_ANGLE_RANGES.S3.max) {
-        addFormFault('Sei troppo dritto, fletti leggermente la schiena');
-      }
+    //   if (trunkAngle > TRUNK_ANGLE_RANGES.S3.max) {
+    //     addFormFault('Sei troppo dritto, fletti leggermente la schiena');
+    //   }
     }
 
     return stage;
