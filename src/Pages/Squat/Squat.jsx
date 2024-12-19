@@ -89,14 +89,7 @@ console.log(trunkAngle);
            
               
              }
-             if(trunkAngle>TRUNK_ANGLE_RANGES.S2.max ){
-              toast.warning(`Sei troppo dritto, fletti leggermente la schiena`, {
-                     position: "top-center",
-                     autoClose: 1000,
-                        className : "text-2xl w-full h-auto "
-                   });
-
-             }
+           
         } else if (
           STAGE_RANGES[STAGES.STAGE3].min <= kneeAngle &&
           kneeAngle <= STAGE_RANGES[STAGES.STAGE3].max
@@ -111,14 +104,7 @@ console.log(trunkAngle);
            
               
              }
-             if(trunkAngle>TRUNK_ANGLE_RANGES.S3.max ){
-              toast.warning(`Sei troppo dritto, fletti leggermente la schiena`, {
-                     position: "top-center",
-                     autoClose: 1000,
-                        className : "text-2xl w-full h-auto "
-                   });
-
-             }
+          
         }
   
 
