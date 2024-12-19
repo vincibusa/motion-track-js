@@ -29,7 +29,8 @@ function App() {
         <Route path="/knee-right" element={<KneeFlexion side="right"/>}/>
         <Route path="/report" element={<Report/>}/>
         <Route path="/report-exercise" element={<ReportExercise/>}/>
-        <Route path="/squat" element={<Squat/>}/>
+        <Route path="/squat-left" element={<Squat side="left"/>}/>
+        <Route path="/squat-right" element={<Squat side="right"/>}/>
         <Route path ="/bicep-curl-right" element={<BicepCurl side="right"/>}/>
         <Route path ="/bicep-curl-left" element={<BicepCurl side="left"/>}/>
       </Routes>

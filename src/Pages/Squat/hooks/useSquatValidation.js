@@ -38,7 +38,7 @@ const useSquatValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
         kneeAngle <= STAGE_RANGES[STAGES.STAGE1].max) {
       stage = STAGES.STAGE1;
       if (trunkAngle < TRUNK_ANGLE_RANGES.S1.min) {
-        addFormFault('Estendi la schiena in posizione eretta');
+       showToastIfAllowed('Sei troppo flesso, estendi la schiena', 'warning');
       }
     } 
     // Check Stage 2 (Descent/Ascent)
