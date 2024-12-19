@@ -13,6 +13,7 @@ const useRepValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
       toast[type](message, {
         position: "top-center",
         autoClose: 1000,
+           className : "text-2xl w-full h-auto "
       });
       lastToastTimeRef.current = currentTime;
     }

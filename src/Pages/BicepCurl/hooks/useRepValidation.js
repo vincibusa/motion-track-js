@@ -25,6 +25,7 @@ const useRepValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
       toast[type](message, {
         position: "top-center",
         autoClose,
+           className : "text-2xl w-full h-auto "
       });
       lastWarningRef.current = currentTime;
     }

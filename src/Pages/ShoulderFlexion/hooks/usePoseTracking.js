@@ -43,7 +43,7 @@ const usePoseTracking = ({
 
   // Riferimenti per tracciare la visualizzazione dei toast
   const hasShownPositiveAngleToast = useRef(false);
-  const hasShownAlignmentToast = useRef(false);
+
 
   const calculateShoulderFlexion = useCallback((hip, shoulder, elbow) => {
     const shoulderToHip = [hip[0] - shoulder[0], hip[1] - shoulder[1]];
@@ -60,10 +60,10 @@ const usePoseTracking = ({
     
     let crossProduct;
 
-    if (side == 'left'){
+    if (side === 'left'){
       crossProduct = shoulderToHip[0] * shoulderToElbow[1] - shoulderToHip[1] * shoulderToElbow[0]  ;
     }
-    else if (side=='right'){
+    else if (side==='right'){
       crossProduct = shoulderToHip[1] * shoulderToElbow[0] - shoulderToHip[0] * shoulderToElbow[1];
     }
     
@@ -114,6 +114,7 @@ const usePoseTracking = ({
             position: "top-center",
             autoClose: 3000,
             draggable: true,
+               className : "text-2xl w-full h-auto "
           });
           hasShownPositiveAngleToast.current = true;
         }

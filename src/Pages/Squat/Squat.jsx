@@ -123,6 +123,7 @@ const Squat = ({ side = 'left' }) => {
             toast.success(`Squat valido!`, {
               position: "top-center",
               autoClose: 1000,
+                 className : "text-2xl w-full h-auto "
             });
             return [];
           } else if (newSequence.length === 5) {
@@ -132,6 +133,7 @@ const Squat = ({ side = 'left' }) => {
             toast.error(`Squat non valido!`, {
               position: "top-center",
               autoClose: 1000,
+                 className : "text-2xl w-full h-auto "
             });
             return [];
           } else if (
@@ -143,6 +145,7 @@ const Squat = ({ side = 'left' }) => {
             toast.error(`Squat incompleto, scendi più in basso`, {
               position: "top-center",
               autoClose: 1000,
+                 className : "text-2xl w-full h-auto "
             });
             setInvalidReps((prevReps) => prevReps + 1);
             setTotalReps((prevTotal) => prevTotal + 1);
@@ -219,6 +222,7 @@ const Squat = ({ side = 'left' }) => {
       toast.error('Inserisci un numero di ripetizioni valido (1-50).', {
         position: "top-center",
         autoClose: 2000,
+           className : "text-2xl w-full h-auto "
       });
     }
   };
