@@ -49,6 +49,7 @@ const Squat = ({ side = 'left' }) => {
   const [target, setTarget] = useState("");
   const [targetReps, setTargetReps] = useState(10);
   const [showStartButton, setShowStartButton] = useState(false);
+  const [kneeAngle, setKneeAngle] = useState(0); // Added state for knee angle
 
   const { cameraPermissionGranted, requestCameraPermission } = useCameraPermission();
   const requestFullscreen = useFullscreen();
@@ -164,7 +165,7 @@ const Squat = ({ side = 'left' }) => {
     isTracking,
     canvasRef,
     videoRef,
-    setAngle,
+    setKneeAngle,
     setMaxFlexion,
     validateRepetition,
   });
