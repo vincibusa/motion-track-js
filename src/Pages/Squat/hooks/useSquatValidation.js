@@ -8,8 +8,6 @@ const useSquatValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
   const [stageSequence, setStageSequence] = useState([]);
   const [currentStage, setCurrentStage] = useState(null);
   const lastToastTimeRef = useRef(0);
-
-  // Reference for tracking form faults
   const formFaultsRef = useRef([]);
 
   const showToastIfAllowed = (message, type, autoClose = 1000) => {
@@ -38,7 +36,7 @@ const useSquatValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
         kneeAngle <= STAGE_RANGES[STAGES.STAGE1].max) {
       stage = STAGES.STAGE1;
       if (trunkAngle < TRUNK_ANGLE_RANGES.S1.min) {
-       showToastIfAllowed('Sei troppo flesso, estendi la schiena', 'warning');
+        addFormFault('Sei troppo flesso, estendi la schiena');
       }
     } 
     // Check Stage 2 (Descent/Ascent)
@@ -48,9 +46,6 @@ const useSquatValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
       if (trunkAngle < TRUNK_ANGLE_RANGES.S2.min) {
         addFormFault('Sei troppo flesso, estendi la schiena');
       }
-    //   if (trunkAngle > TRUNK_ANGLE_RANGES.S2.max) {
-    //     addFormFault('Sei troppo dritto, fletti leggermente la schiena');
-    //   }
     } 
     // Check Stage 3 (Bottom position)
     else if (kneeAngle >= STAGE_RANGES[STAGES.STAGE3].min && 
@@ -59,9 +54,6 @@ const useSquatValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
       if (trunkAngle < TRUNK_ANGLE_RANGES.S3.min) {
         addFormFault('Sei troppo flesso, estendi la schiena');
       }
-    //   if (trunkAngle > TRUNK_ANGLE_RANGES.S3.max) {
-    //     addFormFault('Sei troppo dritto, fletti leggermente la schiena');
-    //   }
     }
 
     return stage;
@@ -102,31 +94,27 @@ const useSquatValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
 
           const newSequence = [...prev, newStage];
 
-          // Complete and valid repetition
-          if (validateStageSequence(newSequence)) {
+          // Complete sequence check
+          if (newSequence.length === 5) {
             onTotalRep();
-            if (formFaultsRef.current.length === 0) {
+            
+            // Check if sequence is valid
+            const isSequenceValid = validateStageSequence(newSequence);
+            
+            // Even if sequence is valid, rep is invalid if there are form faults
+            if (isSequenceValid && formFaultsRef.current.length === 0) {
               onValidRep();
               showToastIfAllowed('Squat valido!', 'success');
             } else {
               onInvalidRep();
-              const faults = formFaultsRef.current.join('\n');
-              showToastIfAllowed(`Squat non valido!\nMotivo:\n${faults}`, 'error');
+              const message = formFaultsRef.current.length > 0
+                ? `Squat non valido!\nMotivo:\n${formFaultsRef.current.join('\n')}`
+                : 'Squat non valido!';
+              showToastIfAllowed(message, 'error');
             }
             formFaultsRef.current = [];
             return [];
-          } 
-          // Invalid sequence (wrong order or too many stages)
-          else if (newSequence.length === 5) {
-            onTotalRep();
-            onInvalidRep();
-            const message = formFaultsRef.current.length > 0
-              ? `Squat non valido!\nMotivo:\n${formFaultsRef.current.join('\n')}`
-              : 'Squat non valido!';
-            showToastIfAllowed(message, 'error');
-            formFaultsRef.current = [];
-            return [];
-          } 
+          }
           // Incomplete depth
           else if (newSequence.length < 5 && 
                    newStage === STAGES.STAGE1 && 
