@@ -106,10 +106,11 @@ const useSquatValidation = ({ onValidRep, onInvalidRep, onTotalRep }) => {
               onValidRep();
               showToastIfAllowed('Squat valido!', 'success');
             } else {
-              onInvalidRep();
+            
               const message = formFaultsRef.current.length > 0
                 ? `Squat non valido!\nMotivo:\n${formFaultsRef.current.join('\n')}`
                 : 'Squat non valido!';
+                onInvalidRep();
               showToastIfAllowed(message, 'error');
             }
             formFaultsRef.current = [];
