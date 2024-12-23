@@ -4,7 +4,7 @@ const VideoCanvas = ({ videoRef, canvasRef }) => {
       <video
         style={{ transform: 'scaleX(-1)' }}
         ref={videoRef}
-        className="absolute inset-0 w-full h-full object-cover lg:object-contain"
+        className="absolute inset-0 w-full h-full object-contain"
         autoPlay
         playsInline
         muted
@@ -17,7 +17,7 @@ const VideoCanvas = ({ videoRef, canvasRef }) => {
       <canvas
         style={{ transform: 'scaleX(-1)' }}
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full object-cover lg:object-contain"
+        className="absolute inset-0 w-full h-full object-contain"
       />
     </div>
   );

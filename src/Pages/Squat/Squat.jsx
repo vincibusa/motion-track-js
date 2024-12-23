@@ -2,7 +2,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
+import { useSelector } from 'react-redux';  // <--- Importa useSelector
 import 'react-toastify/dist/ReactToastify.css';
+import { useDispatch } from 'react-redux';
+import { resetSquatReps } from '../../redux/slices/squatRepsSlice';
 
 // Import Custom Hooks
 import useCameraPermission from '../../hooks/useCameraPermission';
@@ -32,117 +35,115 @@ const Squat = ({ side = 'left' }) => {
   const containerRef = useRef(null);
 
   const navigate = useNavigate();
+  const dispatch = useDispatch(); 
+  
 
-  // State declarations
-  const [maxFlexion, setMaxFlexion] = useState(0);
+  // State locali
   const [isTracking, setIsTracking] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [isCountdownActive, setIsCountdownActive] = useState(false);
-  const [validReps, setValidReps] = useState(0);
-  const [invalidReps, setInvalidReps] = useState(0);
-  const [totalReps, setTotalReps] = useState(0);
   const [target, setTarget] = useState("");
   const [targetReps, setTargetReps] = useState(10);
   const [showStartButton, setShowStartButton] = useState(false);
-  const [kneeAngle, setKneeAngle] = useState(0);
-  const [trunkAngle, setTrunkAngle] = useState(0);
+
+  // Leggiamo le reps dallo store di Redux
+  const squatReps = useSelector((state) => state.squatReps.reps);
+
+  // Calcoliamo quante reps totali, valide, invalide
+  const totalReps = squatReps.length;
+  const validReps = squatReps.filter((r) => r.isValid).length;
+  const invalidReps = squatReps.filter((r) => !r.isValid).length;
 
   // Custom hooks
   const { cameraPermissionGranted, requestCameraPermission } = useCameraPermission();
   const requestFullscreen = useFullscreen();
 
-  // Rep handlers
-  const handleValidRep = () => setValidReps(prev => prev + 1);
-  const handleInvalidRep = () => setInvalidReps(prev => prev + 1);
-  const handleTotalRep = () => setTotalReps(prev => prev + 1);
+  // Hook di validazione (senza callback)
+  const { validateRepetition } = useSquatValidation();
 
-  // Validation hook
-  const { validateRepetition, stageSequence, currentStage } = useSquatValidation({
-    onValidRep: handleValidRep,
-    onInvalidRep: handleInvalidRep,
-    onTotalRep: handleTotalRep
-  });
-
-  // Pose tracking hook
+  // Hook di PoseTracking
   usePoseTracking({
     side,
     isTracking,
     canvasRef,
     videoRef,
-    setKneeAngle,
-    setMaxFlexion,
+    // Passiamo la callback di validazione
     validateRepetition: (kneeAngle, trunkAngle) => validateRepetition(kneeAngle, trunkAngle),
-    setTrunkAngle,
   });
 
-  // Effect for handling exercise completion
+  // Se raggiungiamo targetReps, fermiamo e facciamo redirect
   useEffect(() => {
-    if (totalReps >= targetReps) {
+    if (totalReps >= targetReps && isTracking) {
       setIsTracking(false);
       toast.info(`Hai completato ${targetReps} ripetizioni!`, {
-        position: "top-center",
+        position: 'top-center',
         autoClose: 2000,
-        className: "text-2xl w-full h-auto"
+        className: 'text-2xl w-full h-auto'
       });
+      // Salvataggio info
       localStorage.setItem('totalReps', totalReps.toString());
       localStorage.setItem('validReps', validReps.toString());
       localStorage.setItem('invalidReps', invalidReps.toString());
-      localStorage.setItem('name', "Report Squat");
+      localStorage.setItem('name', 'Report Squat');
+      localStorage.setItem('reps', JSON.stringify(squatReps));  // <--- se vuoi salvare l'array intero
+
       setTimeout(() => {
         navigate('/report-exercise');
       }, 500);
     }
-  }, [totalReps, targetReps, validReps, invalidReps, navigate]);
+  }, [totalReps, targetReps, validReps, invalidReps, isTracking, navigate, squatReps]);
 
-  // Handle start button click
+  // Bottone "START"
   const handleStart = async () => {
     if (!cameraPermissionGranted) {
       await requestCameraPermission();
-
       if (!cameraPermissionGranted) {
-        alert('Non hai i permessi per utilizzare la fotocamera. Per favore, consenti l\'accesso.');
+        alert("Non hai i permessi per utilizzare la fotocamera. Per favore, consenti l'accesso.");
         return;
       }
     }
     requestFullscreen(containerRef);
     setIsCountdownActive(true);
-    let seconds = 5;
 
+    let seconds = 5;
     const interval = setInterval(() => {
       seconds -= 1;
       setCountdown(seconds);
-
       if (seconds <= 0) {
         clearInterval(interval);
         setIsCountdownActive(false);
-        const today = new Date().toISOString();
-        localStorage.setItem('startDate', today);
+        localStorage.setItem('startDate', new Date().toISOString());
         setIsTracking(true);
       }
     }, 1000);
   };
 
-  // Handle rep input confirmation
+  // Conferma reps da input
   const handleConfirmReps = () => {
-    const reps = Number(target);
-    if (reps >= 1 && reps <= 50) {
-      setTargetReps(reps);
+        dispatch(resetSquatReps());
+    const repsNum = Number(target);
+    if (repsNum >= 1 && repsNum <= 50) {
+      setTargetReps(repsNum);
       setShowStartButton(true);
     } else {
       toast.error('Inserisci un numero di ripetizioni valido (1-50).', {
-        position: "top-center",
+        position: 'top-center',
         autoClose: 2000,
-        className: "text-2xl w-full h-auto"
+        className: 'text-2xl w-full h-auto'
       });
     }
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col items-center justify-center bg-gray-900" ref={containerRef}>
+    <div
+      className="h-screen w-screen flex flex-col items-center justify-center bg-gray-900"
+      ref={containerRef}
+    >
       <ToastContainer />
-      
+
       <NavigationButton onClick={() => navigate(-1)} />
 
+      {/* Info su quante reps abbiamo fatto e target */}
       <RepsDisplay totalReps={totalReps} targetReps={targetReps} />
 
       <VideoCanvas videoRef={videoRef} canvasRef={canvasRef} isTracking={isTracking} />
@@ -151,13 +152,12 @@ const Squat = ({ side = 'left' }) => {
         {!isTracking && !isCountdownActive && !showStartButton && (
           <RepsInput target={target} setTarget={setTarget} onConfirm={handleConfirmReps} />
         )}
+
         {!isTracking && !isCountdownActive && showStartButton && (
           <StartButton onStart={handleStart} />
         )}
 
-        {isCountdownActive && (
-          <CountdownDisplay countdown={countdown} />
-        )}
+        {isCountdownActive && <CountdownDisplay countdown={countdown} />}
       </div>
     </div>
   );

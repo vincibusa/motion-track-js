@@ -2,6 +2,10 @@
 import React, { useEffect, useState } from "react";
 import { FaHome, FaRedoAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { resetKneeReps } from '../redux/slices/kneeRepsSlice';
+import { resetReps } from "../redux/slices/repsSlice";
+import { resetSquatReps } from "../redux/slices/squatRepsSlice";
 
 const ReportExercise = ({ flexionValue }) => {
   const [isAnimating, setIsAnimating] = useState(false);
@@ -18,6 +22,7 @@ const ReportExercise = ({ flexionValue }) => {
   const name = localStorage.getItem("name");
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   // Carichiamo il maxFlexion salvato
   useEffect(() => {
@@ -58,6 +63,13 @@ const ReportExercise = ({ flexionValue }) => {
     });
     navigate("/");
   };
+
+  const handleRestart = () => {
+    navigate(-1);
+    dispatch(resetKneeReps());
+    dispatch(resetReps());
+    dispatch(resetSquatReps());
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-blue-300 p-6 flex items-center justify-center">
@@ -204,7 +216,7 @@ const ReportExercise = ({ flexionValue }) => {
           <div className="flex justify-between mt-8 space-x-4">
             <button
               className="w-1/2 flex items-center justify-center bg-green-600 text-white py-3 rounded-lg shadow hover:bg-green-700 focus:outline-none"
-              onClick={() => navigate(-1)}
+              onClick={handleRestart}
             >
               <FaRedoAlt className="mr-2 w-4 h-4" />
               Riprova
