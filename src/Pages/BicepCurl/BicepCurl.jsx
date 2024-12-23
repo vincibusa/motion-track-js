@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // components/BicepCurl.jsx
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
